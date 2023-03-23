@@ -1,4 +1,6 @@
 library(shiny)
+library(edgeR)
+library(tidyverse)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -9,16 +11,26 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+          # Sidebar panel for file upload
+          fileInput("file1", 
+                    "Upload Metadata .csv File (containing file names and grouping information",
+                    multiple = FALSE,
+                    accept = c("text/csv",
+                               "text/comma-separated-values,text/plain",
+                               ".csv")),
+          
+          # Input: Select separator ----
+          radioButtons("sep", "Separator",
+                       choices = c(Comma = ",",
+                                   Semicolon = ";",
+                                   Tab = "\t"),
+                       selected = ","),
+          
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("distPlot")
+           tableOutput("metadata_contents")
         )
     )
 )
@@ -26,15 +38,14 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
+    output$metadata_contents <- renderTable({
+      req(input$file1)
+      
+      df <- read_csv(
+        input$file1$datapath,
+        col_names = TRUE,
+      )
+      head(df)
     })
 }
 
