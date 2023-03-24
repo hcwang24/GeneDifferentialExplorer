@@ -93,8 +93,7 @@ ui <- fluidPage(
                 "Metadata File"
               ),
               card_body_fill(
-                tableOutput("metadata_contents"),
-                # textOutput("metadata_levels")
+                tableOutput("metadata_contents")
               )
             ),
           ),
@@ -130,7 +129,27 @@ ui <- fluidPage(
     
     tabPanel(
       "2. Exploratory data analysis",
-      "Content"
+      layout_column_wrap(
+        width = 1 / 2,
+        fill = TRUE,
+        heights_equal = "all",
+        card(textOutput("prefilter_text")),
+        card(textOutput("filter_text")),
+      ),
+      layout_column_wrap(
+        width = 1 / 2,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(full_screen = TRUE,
+          card_header("Prefilter Counts"),
+          card_body_fill(verbatimTextOutput("prefilter_summary"))
+        ),
+        card(full_screen = TRUE,
+             card_header("Postfilter Counts"),
+             card_body_fill(verbatimTextOutput("filtered_summary"))
+        ),
+      )
     ),
 
     tabPanel(
@@ -162,6 +181,8 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  # Data and viz used for tab 1
   # Loading metadata table (data will be stored in metadata_df)
   metadata_df <- eventReactive(input$upload_meta, {
     req(input$metadatafile)
@@ -203,6 +224,50 @@ server <- function(input, output) {
     data()$counts,
     options = list(scrollX = TRUE)
   )
+  
+  # Data and viz used for tab 2
+  prefilter_dim <- reactive(dim(data())[[1]])
+  output$prefilter_text <- renderText(
+    paste("Before filtering, there are",prefilter_dim(),"genes sequenced.")
+  )
+  output$prefilter_summary <- renderPrint(
+    summary(data()$counts)
+  )
+  
+  filtered_data <- reactive({
+    keep <- rowSums(cpm(data()) > 5) >= 3
+    data()[keep, ]
+  })
+  remain_dim <- reactive(dim(filtered_data())[[1]])
+  removed_dim <- reactive(dim(data())[[1]] - dim(filtered_data())[[1]])
+  output$filter_text <- renderText(
+    paste("Filtering! Removing",
+          removed_dim(),
+           "genes and",
+            remain_dim(),
+           "genes remaining.")
+  )
+  output$filtered_summary <- renderPrint(
+    summary(filtered_data()$counts)
+  )
+  
+  
+  # library(RColorBrewer)
+  # colors <- brewer.pal(7, "Set2")
+  # x <- as.factor(d$samples$group)
+  # 
+  # par(mar=c(12,4,2,2))
+  # boxplot(d$counts, outline=FALSE, main="Before Normalization", col=colors[x], las=2)
+  # #	Saved as: Before Normalization_Expression.png
+  # 
+  # plotRLE(d$counts, outline=FALSE, main="Before Normalization", ylab="RLE", col=colors[x], las=2) #Same graph as set2 graph
+  # #	Saved as: Before Normalization RLE.png
+  # 
+  # par(mar=c(5,5,4,3))
+  # plotPCA(d$counts, ylim=c(-1, 1), xlim=c(-1, 1), col=colors[x], main="Before Normalization", cex=1.0)
+  # #	Saved as: Before Normalization PCA.png
+  
+  
 }
 
 # Run the application
