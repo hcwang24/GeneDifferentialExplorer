@@ -13,6 +13,7 @@ library(leaflet)
 library(RColorBrewer)
 library(RUVSeq)
 library(shinyWidgets)
+options(shiny.maxRequestSize=30*1024^2)
 
 light_theme <- bslib::bs_theme(bootswatch = "journal")
 
