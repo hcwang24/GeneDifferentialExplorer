@@ -25,6 +25,8 @@ ui <- fluidPage(
   # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
+
+      # metadata file upload
       card(
         card_header(
           class = "bg-dark",
@@ -32,12 +34,10 @@ ui <- fluidPage(
         ),
         card_body(
           # Sidebar panel for file upload
-          fileInput("file1",
+          fileInput("metadatafile",
             label = NULL,
             multiple = FALSE,
             accept = c(
-              "text/csv",
-              "text/comma-separated-values,text/plain",
               ".csv",
               ".txt"
             )
@@ -52,23 +52,28 @@ ui <- fluidPage(
             ),
             selected = ","
           ),
-          actionButton("upload", "Upload metadata file"),
+          actionButton("upload_meta", "Upload metadata file"),
         ),
       ),
-      fluidRow(
-        # Sidebar panel for file upload
-        fileInput("files2",
+
+      # featureCount files upload
+      card(
+        card_header(
+          class = "bg-dark",
           "Upload featurecount files",
-          multiple = TRUE,
-          accept = c(
-            "text/csv",
-            "text/comma-separated-values,text/plain",
-            ".csv",
-            ".txt"
-          )
         ),
-        actionButton("upload_fc", "Upload featureCount files"),
-      )
+        card_body(
+          fileInput("featurecountfiles",
+            label = NULL,
+            multiple = TRUE,
+            accept = c(
+              ".csv",
+              ".txt"
+            )
+          ),
+          actionButton("upload_featureCounts", "Upload featureCount files"),
+        ),
+      ),
     ),
 
     # Show a plot of the generated distribution
@@ -79,7 +84,7 @@ ui <- fluidPage(
         height = 340,
         fill = TRUE,
         heights_equal = "all",
-        
+
         # Metadata viewer
         card(
           full_screen = TRUE,
@@ -88,20 +93,20 @@ ui <- fluidPage(
           ),
           card_body_fill(
             tableOutput("metadata_contents"),
+            textOutput("metadata_levels")
           )
         ),
-        
+
         # DGEList viewer
         card(
           full_screen = TRUE,
           card_header(
-            "Metadata File"
+            "DGE List"
           ),
           card_body_fill(
-            tableOutput("dge_contents"),
+            textOutput("dge_contents"),
           )
-        ),
-        
+        )
       )
     )
   )
@@ -109,11 +114,11 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  # Loading metadata table
-  metadata_df <- eventReactive(input$upload, {
-    req(input$file1)
+  # Loading metadata table (data will be stored in metadata_df)
+  metadata_df <- eventReactive(input$upload_meta, {
+    req(input$metadatafile)
     read_delim(
-      input$file1$datapath,
+      input$metadatafile$datapath,
       delim = input$sep,
       col_names = TRUE,
       show_col_types = FALSE
@@ -122,17 +127,25 @@ server <- function(input, output) {
   output$metadata_contents <- renderTable({
     metadata_df()
   })
+  # output$metadata_levels <- renderPrint({
+  #   levels(as.factor(metadata_df()$group))
+  # })
 
-  # Loading featurecounts files
-  data <- eventReactive(input$upload_fc, {
-    req(input$files2)
+  # Loading featureCounts files
+  files <- reactiveValues()
+  data <- eventReactive(input$upload_featureCounts, {
+    req(input$featurecountfiles)
+    files$names <- input$featurecountfiles$name
+    files$path <- input$featurecountfiles$datapath
     readDGE(
-      input$files2$datapath
+      files$path,
+      columns = c(1, 3),
+      labels = files$names
     )
   })
-  output$dge_contents <- renderTable({
+  output$dge_contents <- renderPrint(
     data()
-  })
+  )
 }
 
 # Run the application
