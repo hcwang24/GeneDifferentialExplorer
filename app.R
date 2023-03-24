@@ -5,9 +5,19 @@
 library(shiny)
 library(edgeR)
 library(tidyverse)
+library(bslib)
+library(shiny)
+library(htmltools)
+library(plotly)
+library(leaflet)
+
+light_theme <- bslib::bs_theme(bootswatch = "journal")
+
+# dark_theme <- bslib::bs_theme(bootswatch = "darkly")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+  theme = light_theme,
 
   # Application title
   titlePanel("Gene Differential Expression Explorer"),
@@ -15,36 +25,84 @@ ui <- fluidPage(
   # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
-      # Sidebar panel for file upload
-      fileInput("file1",
-        "Upload metadata.csv File (containing list of files with grouping information",
-        multiple = FALSE,
-        accept = c(
-          "text/csv",
-          "text/comma-separated-values,text/plain",
-          ".csv"
-        )
-      ),
-
-      # Input: Select separator ----
-      radioButtons("sep", "Separator",
-        choices = c(
-          Comma = ",",
-          Semicolon = ";",
-          Tab = "\t"
+      card(
+        card_header(
+          class = "bg-dark",
+          "Upload metadata.csv File (containing list of files with grouping information",
         ),
-        selected = ","
+        card_body(
+          # Sidebar panel for file upload
+          fileInput("file1",
+            label = NULL,
+            multiple = FALSE,
+            accept = c(
+              "text/csv",
+              "text/comma-separated-values,text/plain",
+              ".csv",
+              ".txt"
+            )
+          ),
+
+          # Input: Select separator ----
+          radioButtons("sep", "Separator",
+            choices = c(
+              Comma = ",",
+              Semicolon = ";",
+              Tab = "\t"
+            ),
+            selected = ","
+          ),
+          actionButton("upload", "Upload metadata file"),
+        ),
       ),
-      
-      actionButton("upload", "Upload"),
-      
+      fluidRow(
+        # Sidebar panel for file upload
+        fileInput("files2",
+          "Upload featurecount files",
+          multiple = TRUE,
+          accept = c(
+            "text/csv",
+            "text/comma-separated-values,text/plain",
+            ".csv",
+            ".txt"
+          )
+        ),
+        actionButton("upload_fc", "Upload featureCount files"),
+      )
     ),
 
     # Show a plot of the generated distribution
     mainPanel(
-      h3("Exploratory Data Analysis"),
-      tableOutput("metadata_contents"),
-      textOutput("grouping")
+      # h3("Exploratory Data Analysis"),
+      layout_column_wrap(
+        width = 1,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        
+        # Metadata viewer
+        card(
+          full_screen = TRUE,
+          card_header(
+            "Metadata File"
+          ),
+          card_body_fill(
+            tableOutput("metadata_contents"),
+          )
+        ),
+        
+        # DGEList viewer
+        card(
+          full_screen = TRUE,
+          card_header(
+            "Metadata File"
+          ),
+          card_body_fill(
+            tableOutput("dge_contents"),
+          )
+        ),
+        
+      )
     )
   )
 )
@@ -61,13 +119,19 @@ server <- function(input, output) {
       show_col_types = FALSE
     )
   })
-  
   output$metadata_contents <- renderTable({
     metadata_df()
   })
-  
-  output$grouping <- renderText({
-    print(levels(metadata_df()$group))
+
+  # Loading featurecounts files
+  data <- eventReactive(input$upload_fc, {
+    req(input$files2)
+    readDGE(
+      input$files2$datapath
+    )
+  })
+  output$dge_contents <- renderTable({
+    data()
   })
 }
 
