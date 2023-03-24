@@ -96,15 +96,30 @@ ui <- fluidPage(
             # textOutput("metadata_levels")
           )
         ),
+      ),
+      layout_column_wrap(
+        width = 1 / 2,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
 
         # DGEList viewer
         card(
           full_screen = TRUE,
           card_header(
-            "DGE List"
+            "DGE Samples"
           ),
           card_body_fill(
-            tableOutput("dge_contents"),
+            tableOutput("dge_samples"),
+          )
+        ),
+        card(
+          full_screen = TRUE,
+          card_header(
+            "DGE Counts"
+          ),
+          card_body_fill(
+            DT::dataTableOutput("dge_counts"),
           )
         )
       )
@@ -139,13 +154,21 @@ server <- function(input, output) {
       columns = c(1, 3),
       labels = files$names
     )
+    d$samples <- d$samples[, -2] # removing the default group from DGE
     d$samples$files <- files$names
+    if (!is.null(input$upload_meta)) {
+      d$samples <- inner_join(d$samples, metadata_df(), by = join_by(files == files))
+    }
     d
   })
-  output$dge_contents <- renderTable(
-    data()$counts,
+  output$dge_samples <- renderTable(
+    data()$samples,
     rownames = TRUE,
     hover = TRUE
+  )
+  output$dge_counts <- DT::renderDataTable(
+    data()$counts,
+    options = list(scrollX = TRUE)
   )
 }
 
