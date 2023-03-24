@@ -18,112 +18,145 @@ light_theme <- bslib::bs_theme(bootswatch = "journal")
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   theme = light_theme,
-
-  # Application title
   titlePanel("Gene Differential Expression Explorer"),
+  
+  navbarPage("Navigation",
+    tabPanel(
+      "1. File uploads",
+      # Sidebar with a slider input for number of bins
+      sidebarLayout(
+        sidebarPanel(
 
-  # Sidebar with a slider input for number of bins
-  sidebarLayout(
-    sidebarPanel(
-
-      # metadata file upload
-      card(
-        card_header(
-          class = "bg-dark",
-          "Upload metadata.csv File (containing list of files with grouping information",
-        ),
-        card_body(
-          # Sidebar panel for file upload
-          fileInput("metadatafile",
-            label = NULL,
-            multiple = FALSE,
-            accept = c(
-              ".csv",
-              ".txt"
-            )
-          ),
-
-          # Input: Select separator ----
-          radioButtons("sep", "Separator",
-            choices = c(
-              Comma = ",",
-              Semicolon = ";",
-              Tab = "\t"
+          # metadata file upload
+          card(
+            card_header(
+              class = "bg-dark",
+              "Upload metadata.csv File (containing list of files with grouping information",
             ),
-            selected = ","
-          ),
-          actionButton("upload_meta", "Upload metadata file"),
-        ),
-      ),
+            card_body(
+              # Sidebar panel for file upload
+              fileInput("metadatafile",
+                label = NULL,
+                multiple = FALSE,
+                accept = c(
+                  ".csv",
+                  ".txt"
+                )
+              ),
 
-      # featureCount files upload
-      card(
-        card_header(
-          class = "bg-dark",
-          "Upload featurecount files",
+              # Input: Select separator ----
+              radioButtons("sep", "Separator",
+                choices = c(
+                  Comma = ",",
+                  Semicolon = ";",
+                  Tab = "\t"
+                ),
+                selected = ","
+              ),
+              actionButton("upload_meta", "Upload metadata file"),
+            ),
+          ),
+
+          # featureCount files upload
+          card(
+            card_header(
+              class = "bg-dark",
+              "Upload featurecount files",
+            ),
+            card_body(
+              fileInput("featurecountfiles",
+                label = NULL,
+                multiple = TRUE,
+                accept = c(
+                  ".csv",
+                  ".txt"
+                )
+              ),
+              actionButton("upload_featureCounts", "Upload featureCount files"),
+            ),
+          ),
         ),
-        card_body(
-          fileInput("featurecountfiles",
-            label = NULL,
-            multiple = TRUE,
-            accept = c(
-              ".csv",
-              ".txt"
+
+        # Show a plot of the generated distribution
+        mainPanel(
+          # h3("Exploratory Data Analysis"),
+          layout_column_wrap(
+            width = 1,
+            height = 340,
+            fill = TRUE,
+            heights_equal = "all",
+
+            # Metadata viewer
+            card(
+              full_screen = TRUE,
+              card_header(
+                "Metadata File"
+              ),
+              card_body_fill(
+                tableOutput("metadata_contents"),
+                # textOutput("metadata_levels")
+              )
+            ),
+          ),
+          layout_column_wrap(
+            width = 1 / 2,
+            height = 340,
+            fill = TRUE,
+            heights_equal = "all",
+
+            # DGEList viewer
+            card(
+              full_screen = TRUE,
+              card_header(
+                "DGE Samples"
+              ),
+              card_body_fill(
+                tableOutput("dge_samples"),
+              )
+            ),
+            card(
+              full_screen = TRUE,
+              card_header(
+                "DGE Counts"
+              ),
+              card_body_fill(
+                DT::dataTableOutput("dge_counts"),
+              )
             )
-          ),
-          actionButton("upload_featureCounts", "Upload featureCount files"),
-        ),
-      ),
-    ),
-
-    # Show a plot of the generated distribution
-    mainPanel(
-      # h3("Exploratory Data Analysis"),
-      layout_column_wrap(
-        width = 1,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-
-        # Metadata viewer
-        card(
-          full_screen = TRUE,
-          card_header(
-            "Metadata File"
-          ),
-          card_body_fill(
-            tableOutput("metadata_contents"),
-            # textOutput("metadata_levels")
-          )
-        ),
-      ),
-      layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-
-        # DGEList viewer
-        card(
-          full_screen = TRUE,
-          card_header(
-            "DGE Samples"
-          ),
-          card_body_fill(
-            tableOutput("dge_samples"),
-          )
-        ),
-        card(
-          full_screen = TRUE,
-          card_header(
-            "DGE Counts"
-          ),
-          card_body_fill(
-            DT::dataTableOutput("dge_counts"),
           )
         )
       )
-    )
+    ),
+    
+    tabPanel(
+      "2. Exploratory data analysis",
+      "Content"
+    ),
+
+    tabPanel(
+      "3. Quantile normalization",
+      "Content"
+    ),
+
+    tabPanel(
+      "4. TMM Normalization",
+      "Content"
+    ),
+
+    tabPanel(
+      "5. Data visualization",
+      "Content"
+    ),
+
+    tabPanel(
+      "6. EdgeR Pairwise Analysis",
+      "Content"
+    ),
+
+    tabPanel(
+      "7. Final outlook",
+      "Content"
+    ),
   )
 )
 
