@@ -93,7 +93,7 @@ ui <- fluidPage(
           ),
           card_body_fill(
             tableOutput("metadata_contents"),
-            textOutput("metadata_levels")
+            # textOutput("metadata_levels")
           )
         ),
 
@@ -104,7 +104,7 @@ ui <- fluidPage(
             "DGE List"
           ),
           card_body_fill(
-            textOutput("dge_contents"),
+            tableOutput("dge_contents"),
           )
         )
       )
@@ -127,9 +127,6 @@ server <- function(input, output) {
   output$metadata_contents <- renderTable({
     metadata_df()
   })
-  # output$metadata_levels <- renderPrint({
-  #   levels(as.factor(metadata_df()$group))
-  # })
 
   # Loading featureCounts files
   files <- reactiveValues()
@@ -137,14 +134,18 @@ server <- function(input, output) {
     req(input$featurecountfiles)
     files$names <- input$featurecountfiles$name
     files$path <- input$featurecountfiles$datapath
-    readDGE(
+    d <- readDGE(
       files$path,
       columns = c(1, 3),
       labels = files$names
     )
+    d$samples$files <- files$names
+    d
   })
-  output$dge_contents <- renderPrint(
-    data()
+  output$dge_contents <- renderTable(
+    data()$counts,
+    rownames = TRUE,
+    hover = TRUE
   )
 }
 
