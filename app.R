@@ -131,23 +131,16 @@ ui <- fluidPage(
       "2. Exploratory data analysis",
       layout_column_wrap(
         width = 1 / 2,
-        fill = TRUE,
-        heights_equal = "all",
-        card(textOutput("prefilter_text")),
-        card(textOutput("filter_text")),
-      ),
-      layout_column_wrap(
-        width = 1 / 2,
         height = 340,
         fill = TRUE,
         heights_equal = "all",
         card(full_screen = TRUE,
-          card_header("Prefilter Counts"),
-          card_body_fill(verbatimTextOutput("prefilter_summary"))
+          card_header(textOutput("prefilter_text")),
+          card_body_fill(div(span(style = "font-size: 12px;",verbatimTextOutput("prefilter_summary"))))
         ),
         card(full_screen = TRUE,
-             card_header("Postfilter Counts"),
-             card_body_fill(verbatimTextOutput("filtered_summary"))
+          card_header(textOutput("filter_text")),
+          card_body_fill(div(span(style = "font-size: 12px;",verbatimTextOutput("filtered_summary"))))
         ),
       )
     ),
