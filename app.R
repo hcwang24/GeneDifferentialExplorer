@@ -12,6 +12,7 @@ library(plotly)
 library(leaflet)
 library(RColorBrewer)
 library(RUVSeq)
+library(shinyWidgets)
 
 light_theme <- bslib::bs_theme(bootswatch = "journal")
 
@@ -75,6 +76,22 @@ ui <- fluidPage(
                 )
               ),
               actionButton("upload_featureCounts", "Upload featureCount files"),
+            ),
+          ),
+          
+          # Default data upload
+          card(
+            card_header(
+              class = "bg-dark",
+              "Practice with demo data",
+            ),
+            card_body(
+              shinyWidgets::materialSwitch(
+                inputId = "demo_siwtch",
+                label = span(icon("lightbulb"), "Demo data"),
+                value = FALSE,
+                status = "info"
+              ),
             ),
           ),
         ),
@@ -195,7 +212,9 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
   # Data and viz used for tab 1
+  
   # Loading metadata table (data will be stored in metadata_df)
   metadata_df <- eventReactive(input$upload_meta, {
     req(input$metadatafile)
@@ -205,9 +224,6 @@ server <- function(input, output) {
       col_names = TRUE,
       show_col_types = FALSE
     )
-  })
-  output$metadata_contents <- renderTable({
-    metadata_df()
   })
 
   # Loading featureCounts files
@@ -228,6 +244,11 @@ server <- function(input, output) {
     }
     d
   })
+  
+  output$metadata_contents <- renderTable({
+    metadata_df()
+  })
+  
   output$dge_samples <- renderTable(
     data()$samples,
     rownames = TRUE,
