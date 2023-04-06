@@ -1,6 +1,6 @@
 # Solved package not found message with runing the code below in console.
-# library(BiocManager)
-# options(repos = BiocManager::repositories())
+library(BiocManager)
+options(repos = BiocManager::repositories())
 
 library(shiny)
 library(edgeR)
@@ -12,6 +12,8 @@ library(plotly)
 library(leaflet)
 library(RColorBrewer)
 library(RUVSeq)
+library(shinyWidgets)
+options(shiny.maxRequestSize = 30 * 1024^2)
 
 light_theme <- bslib::bs_theme(bootswatch = "journal")
 
@@ -75,6 +77,17 @@ ui <- fluidPage(
                 )
               ),
               actionButton("upload_featureCounts", "Upload featureCount files"),
+            ),
+          ),
+
+          # Default data upload
+          card(
+            card_header(
+              class = "bg-dark",
+              "Practice with demo data",
+            ),
+            card_body(
+              actionButton("demo_data", "Load demo data"),
             ),
           ),
         ),
@@ -168,8 +181,6 @@ ui <- fluidPage(
         ),
       ),
     ),
-    
-    
     tabPanel(
       "3. Quantile normalization",
       "Content"
@@ -196,6 +207,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   # Data and viz used for tab 1
+
   # Loading metadata table (data will be stored in metadata_df)
   metadata_df <- eventReactive(input$upload_meta, {
     req(input$metadatafile)
@@ -205,9 +217,6 @@ server <- function(input, output) {
       col_names = TRUE,
       show_col_types = FALSE
     )
-  })
-  output$metadata_contents <- renderTable({
-    metadata_df()
   })
 
   # Loading featureCounts files
@@ -228,6 +237,59 @@ server <- function(input, output) {
     }
     d
   })
+  
+  metadata_df <- eventReactive(input$demo_data, {
+    read_delim(
+      "demo/metafile.csv",
+      delim = ",",
+      col_names = TRUE,
+      show_col_types = FALSE
+    )
+  })
+
+  data <- eventReactive(input$demo_data, {
+    files <- c(
+      "immB_HET2_featurecounts.txt",
+      "immB_HET3_featurecounts.txt",
+      "immB_HET4_featurecounts.txt",
+      "immB_KO1_featurecounts.txt",
+      "immB_KO2_featurecounts.txt",
+      "immB_KO3_featurecounts.txt",
+      "immB_KO4_featurecounts.txt",
+      "immB_WT2_featurecounts.txt",
+      "immB_WT3_featurecounts.txt",
+      "immB_WT4_featurecounts.txt",
+      "preB_HET1new_featurecounts.txt",
+      "preB_HET2_featurecounts.txt",
+      "preB_HET3_featurecounts.txt",
+      "preB_HET4_featurecounts.txt",
+      "preB_KO1_featurecounts.txt",
+      "preB_KO2_featurecounts.txt",
+      "preB_KO3_featurecounts.txt",
+      "preB_KO4_featurecounts.txt",
+      "preB_WT2_featurecounts.txt",
+      "preB_WT3_featurecounts.txt",
+      "preB_WT4_featurecounts.txt"
+    )
+    file_path <- "demo/"
+    d <- readDGE(
+      files,
+      path=file_path,
+      columns = c(1, 3),
+      labels = files
+    )
+    d$samples <- d$samples[, -2] # removing the default group from DGE
+    d$samples$files <- files
+    if (!is.null(input$upload_meta)) {
+      d$samples <- inner_join(d$samples, metadata_df(), by = join_by(files == files))
+    }
+    d
+  })
+
+  output$metadata_contents <- renderTable({
+    metadata_df()
+  })
+
   output$dge_samples <- renderTable(
     data()$samples,
     rownames = TRUE,
@@ -265,22 +327,21 @@ server <- function(input, output) {
   output$filtered_summary <- renderPrint(
     summary(filtered_data()$counts)
   )
-  
+
   g <- reactive(as.factor(filtered_data()$samples$group))
   colors <- brewer.pal(7, "Set2")
 
   output$raw_boxplot <- renderPlot(
-    boxplot(filtered_data()$counts, outline=FALSE, main="Raw Boxplot", col=colors[g()], las=2)
+    boxplot(filtered_data()$counts, outline = FALSE, main = "Raw Boxplot", col = colors[g()], las = 2)
   )
 
   output$raw_RLE <- renderPlot(
-    plotRLE(filtered_data()$counts, outline=FALSE, main="Raw RLE", ylab="RLE", col=colors[g()], las=2)
+    plotRLE(filtered_data()$counts, outline = FALSE, main = "Raw RLE", ylab = "RLE", col = colors[g()], las = 2)
   )
 
   output$raw_pca <- renderPlot(
-    plotPCA(filtered_data()$counts, main="Raw PCA", col=colors[g()], cex=1.0)
+    plotPCA(filtered_data()$counts, main = "Raw PCA", col = colors[g()], cex = 1.0)
   )
-  
 }
 
 # Run the application
