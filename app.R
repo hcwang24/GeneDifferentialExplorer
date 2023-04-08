@@ -426,8 +426,11 @@ server <- function(input, output) {
   output$norm_pca <- renderPlot(
     plotPCA(norm_data(), main = "Normalized PCA", col = colors[g()], cex = 1.0)
   )
-  
-}
+  # Tab 4: TMM Normalization
+  # Tab 5: Data visualization
+  # Tab 6: EdgeR Pairwise Analysis
+  # Tab 7: Final outlook
+}:
 
 # Run the application
 shinyApp(ui = ui, server = server)
