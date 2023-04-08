@@ -1,6 +1,7 @@
 # Solved package not found message with runing the code below in console.
 library(BiocManager)
-options(repos = BiocManager::repositories())
+# options(repos = BiocManager::repositories())
+getOption("repos")
 
 library(shiny)
 library(edgeR)
