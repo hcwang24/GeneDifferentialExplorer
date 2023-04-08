@@ -143,7 +143,6 @@ ui <- fluidPage(
         )
       )
     ),
-    
     tabPanel(
       "2. Exploratory data analysis",
       layout_column_wrap(
@@ -184,7 +183,6 @@ ui <- fluidPage(
         ),
       ),
     ),
-    
     tabPanel(
       "3. Quantile normalization",
       layout_column_wrap(
@@ -223,7 +221,7 @@ ui <- fluidPage(
           card_header("Raw PCA"),
           card_body_fill(plotOutput("raw_pca2"))
         ),
-      ), 
+      ),
       layout_column_wrap(
         width = 1 / 3,
         height = 340,
@@ -246,10 +244,45 @@ ui <- fluidPage(
         ),
       ),
     ),
-    
     tabPanel(
       "4. TMM Normalization",
-      "Content"
+      layout_column_wrap(
+        width = 1 / 2,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("Effective library size"),
+          card_body_fill(div(span(style = "font-size: 12px;", tableOutput("eff_libsize"))))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("data after tagwise disperson (dT)"),
+          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
+        ),
+      ),
+      layout_column_wrap(
+        width = 1 / 3,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("BCV tagwise dispersion"),
+          card_body_fill(plotOutput("BCV_tagwise_dispersion"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Counts per million (cpm)"),
+          card_body_fill(DT::dataTableOutput("cpm_counts"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Log2 CPM counts"),
+          card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
+        ),
+      ),
     ),
     tabPanel(
       "5. Data visualization",
@@ -299,7 +332,7 @@ server <- function(input, output) {
     }
     d
   })
-  
+
   metadata_df <- eventReactive(input$demo_data, {
     read_delim(
       "demo/metafile.csv",
@@ -336,7 +369,7 @@ server <- function(input, output) {
     file_path <- "demo/"
     d <- readDGE(
       files,
-      path=file_path,
+      path = file_path,
       columns = c(1, 3),
       labels = files
     )
@@ -404,33 +437,83 @@ server <- function(input, output) {
   output$raw_pca <- output$raw_pca2 <- renderPlot(
     plotPCA(filtered_data()$counts, main = "Raw PCA", col = colors[g()], cex = 1.0)
   )
-  
+
   # Tab 3: Apply a quantile normalization with preprocessCore
   q <- reactive(as.matrix(filtered_data()$counts))
   norm_data <- reactive({
-    normalized = normalize.quantiles(q(), copy=TRUE, keep.names=TRUE)
-    })
-  
+    normalized <- normalize.quantiles(q(), copy = TRUE, keep.names = TRUE)
+  })
+
   output$norm_summary <- renderPrint(
     summary(norm_data())
   )
-  
+
   output$norm_boxplot <- renderPlot(
     boxplot(norm_data(), outline = FALSE, main = "Normalized Boxplot", col = colors[g()], las = 2)
   )
-  
+
   output$norm_RLE <- renderPlot(
     plotRLE(norm_data(), outline = FALSE, main = "Normalized RLE", ylab = "RLE", col = colors[g()], las = 2)
   )
-  
+
   output$norm_pca <- renderPlot(
     plotPCA(norm_data(), main = "Normalized PCA", col = colors[g()], cex = 1.0)
   )
   # Tab 4: TMM Normalization
+  norm_DGE <- reactive({
+    norm_DGE <- DGEList(counts = norm_data(), group = g())
+    norm_DGE <- calcNormFactors(norm_DGE)
+    norm_DGE$samples$eff.lib.size <- norm_DGE$samples$lib.size * norm_DGE$samples$norm.factors # add effective library size
+    norm_DGE
+  })
+
+  dC <- reactive(estimateCommonDisp(norm_DGE())) # estimates common dispersion
+  dT <- reactive(estimateTagwiseDisp(dC())) # estimate Tagwise dispersions
+
+  output$BCV_tagwise_dispersion <- renderPlot(
+    plotBCV(dT(), main = "BCV Tagwise Dispersion")
+  )
+
+  output$eff_libsize <- renderTable(
+    norm_DGE()$samples,
+    rownames = TRUE,
+    hover = TRUE
+  )
+
+  output$dT_output <- renderPrint(
+    dT()
+  )
+
+  cpm_counts <- reactive(cpm(norm_DGE()))
+  log2_cpm_counts <- reactive(log2(cpm(norm_DGE())))
+
+  output$cpm_counts <- DT::renderDataTable(
+    cpm_counts() |>
+      round(2),
+    options = list(scrollX = TRUE)
+  )
+
+  output$log2_cpm_counts <- DT::renderDataTable(
+    log2_cpm_counts() |>
+      round(2),
+    options = list(scrollX = TRUE)
+  )
+
+  # output$dge_counts <- DT::renderDataTable(
+  #   data()$counts,
+  #   options = list(scrollX = TRUE)
+  # )
+  #
+  #
+  # output$check_output <- renderPrint(
+  #   dT()
+  # )
+
+
   # Tab 5: Data visualization
   # Tab 6: EdgeR Pairwise Analysis
   # Tab 7: Final outlook
-}:
+}
 
 # Run the application
 shinyApp(ui = ui, server = server)
