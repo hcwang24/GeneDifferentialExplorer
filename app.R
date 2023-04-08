@@ -14,6 +14,7 @@ library(leaflet)
 library(RColorBrewer)
 library(RUVSeq)
 library(shinyWidgets)
+library(preprocessCore)
 options(shiny.maxRequestSize = 30 * 1024^2)
 
 light_theme <- bslib::bs_theme(bootswatch = "journal")
@@ -142,6 +143,7 @@ ui <- fluidPage(
         )
       )
     ),
+    
     tabPanel(
       "2. Exploratory data analysis",
       layout_column_wrap(
@@ -182,10 +184,69 @@ ui <- fluidPage(
         ),
       ),
     ),
+    
     tabPanel(
       "3. Quantile normalization",
-      "Content"
+      layout_column_wrap(
+        width = 1 / 2,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("Summary of filtered data in step 2"),
+          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Summary of quantile normalized data in step 3"),
+          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
+        ),
+      ),
+      layout_column_wrap(
+        width = 1 / 3,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("Raw gene expression"),
+          card_body_fill(plotOutput("raw_boxplot2"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Raw relative level of expression"),
+          card_body_fill(plotOutput("raw_RLE2"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Raw PCA"),
+          card_body_fill(plotOutput("raw_pca2"))
+        ),
+      ), 
+      layout_column_wrap(
+        width = 1 / 3,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("Quantile normalized gene expression"),
+          card_body_fill(plotOutput("norm_boxplot"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Quantile normalized relative level of expression"),
+          card_body_fill(plotOutput("norm_RLE"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Quantile normalized PCA"),
+          card_body_fill(plotOutput("norm_pca"))
+        ),
+      ),
     ),
+    
     tabPanel(
       "4. TMM Normalization",
       "Content"
@@ -301,7 +362,7 @@ server <- function(input, output) {
     options = list(scrollX = TRUE)
   )
 
-  # Data and viz used for tab 2
+  # Tab 2: Data and viz
   raw_dim <- reactive(dim(data())[[1]])
   output$raw_text <- renderText(
     paste("Before filtering, there are", raw_dim(), "genes sequenced.")
@@ -325,25 +386,51 @@ server <- function(input, output) {
       "genes remaining."
     )
   )
-  output$filtered_summary <- renderPrint(
+  output$filtered_summary <- output$filtered_summary2 <- renderPrint(
     summary(filtered_data()$counts)
   )
 
   g <- reactive(as.factor(filtered_data()$samples$group))
   colors <- brewer.pal(7, "Set2")
 
-  output$raw_boxplot <- renderPlot(
+  output$raw_boxplot <- output$raw_boxplot2 <- renderPlot(
     boxplot(filtered_data()$counts, outline = FALSE, main = "Raw Boxplot", col = colors[g()], las = 2)
   )
 
-  output$raw_RLE <- renderPlot(
+  output$raw_RLE <- output$raw_RLE2 <- renderPlot(
     plotRLE(filtered_data()$counts, outline = FALSE, main = "Raw RLE", ylab = "RLE", col = colors[g()], las = 2)
   )
 
-  output$raw_pca <- renderPlot(
+  output$raw_pca <- output$raw_pca2 <- renderPlot(
     plotPCA(filtered_data()$counts, main = "Raw PCA", col = colors[g()], cex = 1.0)
   )
-}
+  
+  # Tab 3: Apply a quantile normalization with preprocessCore
+  q <- reactive(as.matrix(filtered_data()$counts))
+  norm_data <- reactive({
+    normalized = normalize.quantiles(q(), copy=TRUE, keep.names=TRUE)
+    })
+  
+  output$norm_summary <- renderPrint(
+    summary(norm_data())
+  )
+  
+  output$norm_boxplot <- renderPlot(
+    boxplot(norm_data(), outline = FALSE, main = "Normalized Boxplot", col = colors[g()], las = 2)
+  )
+  
+  output$norm_RLE <- renderPlot(
+    plotRLE(norm_data(), outline = FALSE, main = "Normalized RLE", ylab = "RLE", col = colors[g()], las = 2)
+  )
+  
+  output$norm_pca <- renderPlot(
+    plotPCA(norm_data(), main = "Normalized PCA", col = colors[g()], cex = 1.0)
+  )
+  # Tab 4: TMM Normalization
+  # Tab 5: Data visualization
+  # Tab 6: EdgeR Pairwise Analysis
+  # Tab 7: Final outlook
+}:
 
 # Run the application
 shinyApp(ui = ui, server = server)
