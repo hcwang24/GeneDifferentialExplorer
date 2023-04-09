@@ -183,6 +183,7 @@ ui <- fluidPage(
         ),
       ),
     ),
+    
     tabPanel(
       "3. Quantile normalization",
       layout_column_wrap(
@@ -244,6 +245,7 @@ ui <- fluidPage(
         ),
       ),
     ),
+    
     tabPanel(
       "4. TMM Normalization",
       layout_column_wrap(
@@ -284,9 +286,25 @@ ui <- fluidPage(
         ),
       ),
     ),
+    
     tabPanel(
       "5. Data visualization",
-      "Content"
+      layout_column_wrap(
+        width = 1 / 2,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("Principal Component Analysis"),
+          card_body_fill(plotOutput("pca_plot"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("data after tagwise disperson (dT)"),
+          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
+        ),
+      ),
     ),
     tabPanel(
       "6. EdgeR Pairwise Analysis",
@@ -505,12 +523,59 @@ server <- function(input, output) {
   # )
   #
   #
-  # output$check_output <- renderPrint(
-  #   dT()
-  # )
-
 
   # Tab 5: Data visualization
+  
+  # pcamatrix <- logCPM
+  # 
+  # pcatreatment <- as.factor(d$samples$treatment)
+  # pcagenotype <- as.factor(d$samples$genotype)
+  # pcagroup <- as.factor(d$samples$group)
+  # 
+  pca_data <- reactive(prcomp(t(log2_cpm_counts()), center = TRUE, scale. = TRUE))
+  # percentVariance <- reactive(pca_data()$sdev^2)
+  pca_percent_variance <- reactive({
+    pca_percent_variance <- data.frame(
+    variance = pca_data()$sdev^2
+    ) |>
+    mutate(
+      PC = 1:length(variance),
+      prop_variance = variance / sum(variance))
+    pca_percent_variance
+  })
+  
+  output$check_output <- renderPrint(
+    pca_percent_variance()
+  )
+  output$pca_plot <- renderPlot(
+    ggplot(pca_percent_variance(), aes(x = PC, y = prop_variance)) +
+      geom_line(color = "blue") +
+      geom_text(aes(label = scales::percent(round(prop_variance,2)),
+                    x = PC, y = prop_variance + 0.01),
+                hjust = 0) +
+      scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+      labs(x = "Principal Component", y = "Proportion of variance covered") +
+      theme_bw()
+  )
+  
+  # summary(pca_data)
+  # 
+  # pca_data_restricted = data.frame(PC1 = pca_data$x[,1], PC2 = pca_data$x[,2])
+  # 
+  # pca_graph <- ggplot(pca_data_restricted, aes(PC1, PC2)) + 
+  #   labs(x = paste0("PC1 (", percent(percentVariance[1]/sum(percentVariance)),")"), y = paste0("PC2 (", percent(percentVariance[2]/sum(percentVariance)),")")) + 
+  #   geom_point(size=3, aes(color=factor_genotype, shape=factor_treatment)) + 
+  #   geom_text_repel(size=2, aes(label = rownames(pca_data_restricted), color=factor_genotype)) +
+  #   theme_bw() +
+  #   theme(text=element_text(size=8)) +
+  #   scale_color_brewer(name="Genotype", palette="Set2") + 
+  #   scale_shape_discrete(name="Treatment")
+  # 
+  # colors <- brewer.pal(6, "Set2")
+  # colors
+  # 
+  # pca_graph
+  
   # Tab 6: EdgeR Pairwise Analysis
   # Tab 7: Final outlook
 }
