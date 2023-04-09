@@ -296,14 +296,39 @@ ui <- fluidPage(
         heights_equal = "all",
         card(
           full_screen = TRUE,
-          card_header("Principal Component Analysis"),
-          card_body_fill(plotOutput("pca_plot"))
+          card_header("% total variance covered by each PC"),
+          card_body_fill(plotOutput("percentVar_perPC"))
         ),
         card(
           full_screen = TRUE,
-          card_header("data after tagwise disperson (dT)"),
+          card_header("Principal Component Analysis"),
+          card_body_fill(
+            selectInput("pc_number1", "Select the first PC:", choices = NULL),
+            selectInput("pc_number2", "Select the second PC:", choices = NULL),
+            plotOutput("pca_plot"),
+            )
+        ),
+      ),
+      layout_column_wrap(
+        width = 1 / 3,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("BCV tagwise dispersion"),
           card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
         ),
+        # card(
+        #   full_screen = TRUE,
+        #   card_header("Counts per million (cpm)"),
+        #   card_body_fill(DT::dataTableOutput("cpm_counts"))
+        # ),
+        # card(
+        #   full_screen = TRUE,
+        #   card_header("Log2 CPM counts"),
+        #   card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
+        # ),
       ),
     ),
     tabPanel(
@@ -318,7 +343,7 @@ ui <- fluidPage(
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
   # Data and viz used for tab 1
 
   # Loading metadata table (data will be stored in metadata_df)
@@ -517,59 +542,75 @@ server <- function(input, output) {
     options = list(scrollX = TRUE)
   )
 
-  # output$dge_counts <- DT::renderDataTable(
-  #   data()$counts,
-  #   options = list(scrollX = TRUE)
-  # )
-  #
-  #
-
   # Tab 5: Data visualization
+  # calculate PCA data
+  pca_data <- reactive({
+    prcomp(t(log2_cpm_counts()), center = TRUE, scale. = TRUE)
+    })
+  pca_data_x <- reactive({
+    colnames(pca_data()$x)
+  })
   
-  # pcamatrix <- logCPM
-  # 
-  # pcatreatment <- as.factor(d$samples$treatment)
-  # pcagenotype <- as.factor(d$samples$genotype)
-  # pcagroup <- as.factor(d$samples$group)
-  # 
-  pca_data <- reactive(prcomp(t(log2_cpm_counts()), center = TRUE, scale. = TRUE))
-  # percentVariance <- reactive(pca_data()$sdev^2)
+  # Update the choices for selectInput based on the number of principal components
+  observe({
+    updateSelectInput(session, "pc_number1", choices = list(pca_data_x()))
+  })
+  observe({
+    updateSelectInput(session, "pc_number2", choices = list(pca_data_x()))
+  })
+  
+  # calculate percent variance covered per PC
   pca_percent_variance <- reactive({
     pca_percent_variance <- data.frame(
-    variance = pca_data()$sdev^2
+      variance = pca_data()$sdev^2
     ) |>
-    mutate(
-      PC = 1:length(variance),
-      prop_variance = variance / sum(variance))
+      mutate(
+        PC = 1:length(variance),
+        prop_variance = variance / sum(variance)
+      )
     pca_percent_variance
   })
   
   output$check_output <- renderPrint(
-    pca_percent_variance()
+    colnames(pca_data()$x)
   )
-  output$pca_plot <- renderPlot(
+
+  # Plot for percent variance covered per PC
+  output$percentVar_perPC <- renderPlot(
     ggplot(pca_percent_variance(), aes(x = PC, y = prop_variance)) +
       geom_line(color = "blue") +
-      geom_text(aes(label = scales::percent(round(prop_variance,2)),
-                    x = PC, y = prop_variance + 0.01),
-                hjust = 0) +
+      geom_text(
+        aes(
+          label = scales::percent(round(prop_variance, 2)),
+          x = PC, y = prop_variance + 0.01
+        ),
+        hjust = 0
+      ) +
       scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
       labs(x = "Principal Component", y = "Proportion of variance covered") +
       theme_bw()
   )
   
+  # # Plot PCA graph
+  # output$pca_plot <- renderPlot({
+  #   pca_data()$x |>
+  #     as.data.frame() |>
+  #     ggplot(aes(x=input$pc_number1, y=input$pc_number2)) +
+  #       geom_point(size=3) +
+  #       # labs(x = paste0("PC1 (", percent(percentVariance[1]/sum(percentVariance)),")"), y = paste0("PC2 (", percent(percentVariance[2]/sum(percentVariance)),")")) +
+  #       # geom_point(size=3, aes(color=factor_genotype, shape=factor_treatment)) +
+  #       # geom_text_repel(size=2, aes(label = rownames(pca_data_restricted), color=factor_genotype)) +
+  #       theme_bw()
+  #       # theme(text=element_text(size=8)) +
+  #       # scale_color_brewer(name="Genotype", palette="Set2") +
+  #       # scale_shape_discrete(name="Treatment")
+  # })
+  
   # summary(pca_data)
   # 
   # pca_data_restricted = data.frame(PC1 = pca_data$x[,1], PC2 = pca_data$x[,2])
   # 
-  # pca_graph <- ggplot(pca_data_restricted, aes(PC1, PC2)) + 
-  #   labs(x = paste0("PC1 (", percent(percentVariance[1]/sum(percentVariance)),")"), y = paste0("PC2 (", percent(percentVariance[2]/sum(percentVariance)),")")) + 
-  #   geom_point(size=3, aes(color=factor_genotype, shape=factor_treatment)) + 
-  #   geom_text_repel(size=2, aes(label = rownames(pca_data_restricted), color=factor_genotype)) +
-  #   theme_bw() +
-  #   theme(text=element_text(size=8)) +
-  #   scale_color_brewer(name="Genotype", palette="Set2") + 
-  #   scale_shape_discrete(name="Treatment")
+
   # 
   # colors <- brewer.pal(6, "Set2")
   # colors
