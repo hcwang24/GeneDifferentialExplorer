@@ -287,50 +287,50 @@ ui <- fluidPage(
       ),
     ),
     
-    tabPanel(
-      "5. Data visualization",
-      layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("% total variance covered by each PC"),
-          card_body_fill(plotOutput("percentVar_perPC"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Principal Component Analysis"),
-          card_body_fill(
-            selectInput("pc_number1", "Select the first PC:", choices = NULL),
-            selectInput("pc_number2", "Select the second PC:", choices = NULL),
-            plotOutput("pca_plot"),
-            )
-        ),
-      ),
-      layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("BCV tagwise dispersion"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
-        ),
-        # card(
-        #   full_screen = TRUE,
-        #   card_header("Counts per million (cpm)"),
-        #   card_body_fill(DT::dataTableOutput("cpm_counts"))
-        # ),
-        # card(
-        #   full_screen = TRUE,
-        #   card_header("Log2 CPM counts"),
-        #   card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
-        # ),
-      ),
-    ),
+    # tabPanel(
+    #   "5. Data visualization",
+    #   layout_column_wrap(
+    #     width = 1 / 2,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     # card(
+    #     #   full_screen = TRUE,
+    #     #   card_header("% total variance covered by each PC"),
+    #     #   card_body_fill(plotOutput("percentVar_perPC"))
+    #     # ),
+    #     # card(
+    #     #   full_screen = TRUE,
+    #     #   card_header("Principal Component Analysis"),
+    #     #   card_body_fill(
+    #     #     selectInput("pc_number1", "Select the first PC:", choices = NULL),
+    #     #     selectInput("pc_number2", "Select the second PC:", choices = NULL),
+    #     #     plotOutput("pca_plot"),
+    #     #     )
+    #     # ),
+    #   ),
+    #   layout_column_wrap(
+    #     width = 1 / 3,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("BCV tagwise dispersion"),
+    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Counts per million (cpm)"),
+    #       card_body_fill(DT::dataTableOutput("cpm_counts"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Log2 CPM counts"),
+    #       card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
+    #     ),
+    #   ),
+    # ),
     tabPanel(
       "6. EdgeR Pairwise Analysis",
       "Content"
@@ -544,52 +544,52 @@ server <- function(input, output, session) {
 
   # Tab 5: Data visualization
   # calculate PCA data
-  pca_data <- reactive({
-    prcomp(t(log2_cpm_counts()), center = TRUE, scale. = TRUE)
-    })
-  pca_data_x <- reactive({
-    colnames(pca_data()$x)
-  })
-  
-  # Update the choices for selectInput based on the number of principal components
-  observe({
-    updateSelectInput(session, "pc_number1", choices = list(pca_data_x()))
-  })
-  observe({
-    updateSelectInput(session, "pc_number2", choices = list(pca_data_x()))
-  })
-  
-  # calculate percent variance covered per PC
-  pca_percent_variance <- reactive({
-    pca_percent_variance <- data.frame(
-      variance = pca_data()$sdev^2
-    ) |>
-      mutate(
-        PC = 1:length(variance),
-        prop_variance = variance / sum(variance)
-      )
-    pca_percent_variance
-  })
-  
-  output$check_output <- renderPrint(
-    colnames(pca_data()$x)
-  )
+  # pca_data <- reactive({
+  #   prcomp(t(log2_cpm_counts()), center = TRUE, scale. = TRUE)
+  #   })
+  # pca_data_x <- reactive({
+  #   colnames(pca_data()$x)
+  # })
+  # 
+  # # Update the choices for selectInput based on the number of principal components
+  # observe({
+  #   updateSelectInput(session, "pc_number1", choices = list(pca_data_x()))
+  # })
+  # observe({
+  #   updateSelectInput(session, "pc_number2", choices = list(pca_data_x()))
+  # })
+  # 
+  # # calculate percent variance covered per PC
+  # pca_percent_variance <- reactive({
+  #   pca_percent_variance <- data.frame(
+  #     variance = pca_data()$sdev^2
+  #   ) |>
+  #     mutate(
+  #       PC = 1:length(variance),
+  #       prop_variance = variance / sum(variance)
+  #     )
+  #   pca_percent_variance
+  # })
+  # 
+  # output$check_output <- renderPrint(
+  #   colnames(pca_data()$x)
+  # )
 
-  # Plot for percent variance covered per PC
-  output$percentVar_perPC <- renderPlot(
-    ggplot(pca_percent_variance(), aes(x = PC, y = prop_variance)) +
-      geom_line(color = "blue") +
-      geom_text(
-        aes(
-          label = scales::percent(round(prop_variance, 2)),
-          x = PC, y = prop_variance + 0.01
-        ),
-        hjust = 0
-      ) +
-      scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-      labs(x = "Principal Component", y = "Proportion of variance covered") +
-      theme_bw()
-  )
+  # # Plot for percent variance covered per PC
+  # output$percentVar_perPC <- renderPlot(
+  #   ggplot(pca_percent_variance(), aes(x = PC, y = prop_variance)) +
+  #     geom_line(color = "blue") +
+  #     geom_text(
+  #       aes(
+  #         label = scales::percent(round(prop_variance, 2)),
+  #         x = PC, y = prop_variance + 0.01
+  #       ),
+  #       hjust = 0
+  #     ) +
+  #     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  #     labs(x = "Principal Component", y = "Proportion of variance covered") +
+  #     theme_bw()
+  # )
   
   # # Plot PCA graph
   # output$pca_plot <- renderPlot({
