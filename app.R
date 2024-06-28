@@ -126,107 +126,19 @@ ui <- fluidPage(
       )
     ),
     
-    # tabPanel(
-    #   "3. Quantile normalization",
-    #   layout_column_wrap(
-    #     width = 1 / 2,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Summary of filtered data in step 2"),
-    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Summary of quantile normalized data in step 3"),
-    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
-    #     ),
-    #   ),
-    #   layout_column_wrap(
-    #     width = 1 / 3,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Raw gene expression"),
-    #       card_body_fill(plotOutput("raw_boxplot2"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Raw relative level of expression"),
-    #       card_body_fill(plotOutput("raw_RLE2"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Raw PCA"),
-    #       card_body_fill(plotOutput("raw_pca2"))
-    #     ),
-    #   ),
-    #   layout_column_wrap(
-    #     width = 1 / 3,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Quantile normalized gene expression"),
-    #       card_body_fill(plotOutput("norm_boxplot"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Quantile normalized relative level of expression"),
-    #       card_body_fill(plotOutput("norm_RLE"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Quantile normalized PCA"),
-    #       card_body_fill(plotOutput("norm_pca"))
-    #     ),
-    #   ),
-    # ),
-    
     tabPanel(
       "4. TMM Normalization",
       layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Effective library size"),
-          card_body_fill(div(span(style = "font-size: 12px;", tableOutput("eff_libsize"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("data after tagwise disperson (dT)"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
-        ),
+        width = 1/2, height = "50vh", fill = TRUE, heights_equal = "all",
+        card(full_screen = TRUE, card_header("Effective library size"), card_body_fill(div(span(style = "font-size: 12px;", tableOutput("eff_libsize"))))),
+        card(full_screen = TRUE, card_header("data after tagwise disperson (dT)"), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output")))))
       ),
       layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("BCV tagwise dispersion"),
-          card_body_fill(plotOutput("BCV_tagwise_dispersion"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Counts per million (cpm)"),
-          card_body_fill(DT::dataTableOutput("cpm_counts"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Log2 CPM counts"),
-          card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
-        ),
-      ),
+        width = 1/3, height = "50vh", fill = TRUE, heights_equal = "all",
+        card(full_screen = TRUE, card_header("BCV tagwise dispersion"), card_body_fill(plotOutput("BCV_tagwise_dispersion"))),
+        card(full_screen = TRUE, card_header("Counts per million (cpm)"), card_body_fill(DT::dataTableOutput("cpm_counts"))),
+        card(full_screen = TRUE, card_header("Log2 CPM counts"), card_body_fill(DT::dataTableOutput("log2_cpm_counts")))
+      )
     ),
     
     tabPanel(
