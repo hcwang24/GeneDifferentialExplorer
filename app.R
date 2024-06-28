@@ -1,6 +1,6 @@
 # Solved package not found message with runing the code below in console.
 library(BiocManager)
-# options(repos = BiocManager::repositories())
+options(repos = BiocManager::repositories())
 getOption("repos")
 
 library(shiny)
@@ -32,112 +32,51 @@ ui <- fluidPage(
       # Sidebar with a slider input for number of bins
       sidebarLayout(
         sidebarPanel(
-
           # metadata file upload
           card(
-            card_header(
-              class = "bg-dark",
-              "Upload metadata.csv File (containing list of files with grouping information",
-            ),
+            card_header(class = "bg-dark", "Upload metadata.csv File (containing list of files with grouping information",),
             card_body(
               # Sidebar panel for file upload
-              fileInput("metadatafile",
-                label = NULL,
-                multiple = FALSE,
-                accept = c(
-                  ".csv",
-                  ".txt"
-                )
-              ),
+              fileInput("metadatafile", label = NULL, multiple = FALSE, accept = c(".csv",".txt")),
 
               # Input: Select separator ----
-              radioButtons("sep", "Separator",
-                choices = c(
-                  Comma = ",",
-                  Semicolon = ";",
-                  Tab = "\t"
-                ),
-                selected = ","
-              ),
-              actionButton("upload_meta", "Upload metadata file"),
-            ),
+              radioButtons("sep", "Separator", choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = ","),
+              actionButton("upload_meta", "Upload metadata file"),),
           ),
 
           # featureCount files upload
           card(
-            card_header(
-              class = "bg-dark",
-              "Upload featurecount files",
-            ),
+            card_header(class = "bg-dark", "Upload featurecount files",),
             card_body(
-              fileInput("featurecountfiles",
-                label = NULL,
-                multiple = TRUE,
-                accept = c(
-                  ".csv",
-                  ".txt"
-                )
-              ),
-              actionButton("upload_featureCounts", "Upload featureCount files"),
-            ),
+              fileInput("featurecountfiles", label = NULL, multiple = TRUE, accept = c(".csv",".txt")),
+              actionButton("upload_featureCounts", "Upload featureCount files"),),
           ),
 
           # Default data upload
           card(
-            card_header(
-              class = "bg-dark",
-              "Practice with demo data",
-            ),
-            card_body(
-              actionButton("demo_data", "Load demo data"),
-            ),
+            card_header(class = "bg-dark","Practice with demo data",),
+            card_body(actionButton("demo_data", "Load demo data"),),
           ),
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
-          # h3("Exploratory Data Analysis"),
           layout_column_wrap(
             width = 1,
-            height = 340,
+            height = "50%",  # Adjusted height to take half of the window height
             fill = TRUE,
             heights_equal = "all",
-
-            # Metadata viewer
-            card(
-              full_screen = TRUE,
-              card_header(
-                "Metadata File"
-              ),
-              card_body_fill(
-                tableOutput("metadata_contents")
-              )
-            ),
-          ),
-          layout_column_wrap(
-            width = 1 / 2,
-            height = 340,
-            fill = TRUE,
-            heights_equal = "all",
-
-            # DGEList viewer
-            card(
-              full_screen = TRUE,
-              card_header(
-                "DGE Samples"
-              ),
-              card_body_fill(
-                tableOutput("dge_samples"),
-              )
-            ),
-            card(
-              full_screen = TRUE,
-              card_header(
-                "DGE Counts"
-              ),
-              card_body_fill(
-                DT::dataTableOutput("dge_counts"),
-              )
+            
+            card(full_screen = TRUE, card_header("Metadata File"), card_body_fill(tableOutput("metadata_contents"))),
+            
+            layout_column_wrap(
+              width = 1 / 2,
+              height = "50%",  # Adjusted height to take half of the window height
+              fill = TRUE,
+              heights_equal = "all",
+              
+              card(full_screen = TRUE, card_header("DGE Samples"), card_body_fill(tableOutput("dge_samples"))),
+              card(full_screen = TRUE, card_header("DGE Counts"), card_body_fill(DT::dataTableOutput("dge_counts")))
             )
           )
         )
@@ -287,50 +226,51 @@ ui <- fluidPage(
       ),
     ),
     
-    # tabPanel(
-    #   "5. Data visualization",
-    #   layout_column_wrap(
-    #     width = 1 / 2,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     # card(
-    #     #   full_screen = TRUE,
-    #     #   card_header("% total variance covered by each PC"),
-    #     #   card_body_fill(plotOutput("percentVar_perPC"))
-    #     # ),
-    #     # card(
-    #     #   full_screen = TRUE,
-    #     #   card_header("Principal Component Analysis"),
-    #     #   card_body_fill(
-    #     #     selectInput("pc_number1", "Select the first PC:", choices = NULL),
-    #     #     selectInput("pc_number2", "Select the second PC:", choices = NULL),
-    #     #     plotOutput("pca_plot"),
-    #     #     )
-    #     # ),
-    #   ),
-    #   layout_column_wrap(
-    #     width = 1 / 3,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("BCV tagwise dispersion"),
-    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Counts per million (cpm)"),
-    #       card_body_fill(DT::dataTableOutput("cpm_counts"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Log2 CPM counts"),
-    #       card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
-    #     ),
-    #   ),
-    # ),
+    tabPanel(
+      "5. Data visualization",
+      layout_column_wrap(
+        width = 1 / 2,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("% total variance covered by each PC"),
+          card_body_fill(plotOutput("percentVar_perPC"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Principal Component Analysis"),
+          card_body_fill(
+            selectInput("pc_number1", "Select the first PC:", choices = NULL),
+            selectInput("pc_number2", "Select the second PC:", choices = NULL),
+            plotOutput("pca_plot")
+          )
+        )
+      ),
+      layout_column_wrap(
+        width = 1 / 3,
+        height = 340,
+        fill = TRUE,
+        heights_equal = "all",
+        card(
+          full_screen = TRUE,
+          card_header("BCV tagwise dispersion"),
+          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Counts per million (cpm)"),
+          card_body_fill(DT::dataTableOutput("cpm_counts"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Log2 CPM counts"),
+          card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
+        )
+      )
+    ),
+    
     tabPanel(
       "6. EdgeR Pairwise Analysis",
       "Content"
