@@ -27,6 +27,7 @@ ui <- fluidPage(
   titlePanel("Gene Differential Expression Explorer"),
   navbarPage(
     "Navigation",
+    
     tabPanel(
       "1. File uploads",
       # Sidebar with a slider input for number of bins
@@ -104,8 +105,29 @@ ui <- fluidPage(
       )
     ),
     
+    tabPanel(
+      "3. Quantile normalization",
+      layout_column_wrap(
+        width = 1/2, height = "33vh", fill = TRUE, heights_equal = "all",
+        card(full_screen = TRUE, card_header("Summary of filtered data in step 2"), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))),
+        card(full_screen = TRUE, card_header("Summary of quantile normalized data in step 3"), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary")))))
+      ),
+      layout_column_wrap(
+        width = 1/3, height = "33vh", fill = TRUE, heights_equal = "all",
+        card(full_screen = TRUE, card_header("Raw gene expression"), card_body_fill(plotOutput("raw_boxplot2"))),
+        card(full_screen = TRUE, card_header("Raw relative level of expression"), card_body_fill(plotOutput("raw_RLE2"))),
+        card(full_screen = TRUE, card_header("Raw PCA"), card_body_fill(plotOutput("raw_pca2")))
+      ),
+      layout_column_wrap(
+        width = 1/3, height = "33vh", fill = TRUE, heights_equal = "all",
+        card(full_screen = TRUE, card_header("Quantile normalized gene expression"), card_body_fill(plotOutput("norm_boxplot"))),
+        card(full_screen = TRUE, card_header("Quantile normalized relative level of expression"), card_body_fill(plotOutput("norm_RLE"))),
+        card(full_screen = TRUE, card_header("Quantile normalized PCA"), card_body_fill(plotOutput("norm_pca")))
+      )
+    ),
+    
     # tabPanel(
-    #   "2. Exploratory data analysis",
+    #   "3. Quantile normalization",
     #   layout_column_wrap(
     #     width = 1 / 2,
     #     height = 340,
@@ -113,13 +135,13 @@ ui <- fluidPage(
     #     heights_equal = "all",
     #     card(
     #       full_screen = TRUE,
-    #       card_header(textOutput("raw_text")),
-    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary"))))
+    #       card_header("Summary of filtered data in step 2"),
+    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))
     #     ),
     #     card(
     #       full_screen = TRUE,
-    #       card_header(textOutput("filter_text")),
-    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
+    #       card_header("Summary of quantile normalized data in step 3"),
+    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
     #     ),
     #   ),
     #   layout_column_wrap(
@@ -130,82 +152,41 @@ ui <- fluidPage(
     #     card(
     #       full_screen = TRUE,
     #       card_header("Raw gene expression"),
-    #       card_body_fill(plotOutput("raw_boxplot"))
+    #       card_body_fill(plotOutput("raw_boxplot2"))
     #     ),
     #     card(
     #       full_screen = TRUE,
     #       card_header("Raw relative level of expression"),
-    #       card_body_fill(plotOutput("raw_RLE"))
+    #       card_body_fill(plotOutput("raw_RLE2"))
     #     ),
     #     card(
     #       full_screen = TRUE,
     #       card_header("Raw PCA"),
-    #       card_body_fill(plotOutput("raw_pca"))
+    #       card_body_fill(plotOutput("raw_pca2"))
+    #     ),
+    #   ),
+    #   layout_column_wrap(
+    #     width = 1 / 3,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Quantile normalized gene expression"),
+    #       card_body_fill(plotOutput("norm_boxplot"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Quantile normalized relative level of expression"),
+    #       card_body_fill(plotOutput("norm_RLE"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Quantile normalized PCA"),
+    #       card_body_fill(plotOutput("norm_pca"))
     #     ),
     #   ),
     # ),
-    
-    tabPanel(
-      "3. Quantile normalization",
-      layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Summary of filtered data in step 2"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Summary of quantile normalized data in step 3"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
-        ),
-      ),
-      layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Raw gene expression"),
-          card_body_fill(plotOutput("raw_boxplot2"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw relative level of expression"),
-          card_body_fill(plotOutput("raw_RLE2"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw PCA"),
-          card_body_fill(plotOutput("raw_pca2"))
-        ),
-      ),
-      layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Quantile normalized gene expression"),
-          card_body_fill(plotOutput("norm_boxplot"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Quantile normalized relative level of expression"),
-          card_body_fill(plotOutput("norm_RLE"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Quantile normalized PCA"),
-          card_body_fill(plotOutput("norm_pca"))
-        ),
-      ),
-    ),
     
     tabPanel(
       "4. TMM Normalization",
