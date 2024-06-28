@@ -1,6 +1,6 @@
 # Solved package not found message with runing the code below in console.
 library(BiocManager)
-# options(repos = BiocManager::repositories())
+options(repos = BiocManager::repositories())
 getOption("repos")
 
 library(shiny)
@@ -15,6 +15,7 @@ library(RColorBrewer)
 library(RUVSeq)
 library(shinyWidgets)
 library(preprocessCore)
+library(ggrepel)
 options(shiny.maxRequestSize = 30 * 1024^2)
 
 light_theme <- bslib::bs_theme(bootswatch = "journal")
@@ -27,270 +28,181 @@ ui <- fluidPage(
   titlePanel("Gene Differential Expression Explorer"),
   navbarPage(
     "Navigation",
+    
     tabPanel(
       "1. File uploads",
-      # Sidebar with a slider input for number of bins
+      # Sidebar with file upload widgets
       sidebarLayout(
         sidebarPanel(
-
-          # metadata file upload
+          # Metadata file upload
           card(
-            card_header(
-              class = "bg-dark",
-              "Upload metadata.csv File (containing list of files with grouping information",
-            ),
+            card_header(class = "bg-dark", "Upload metadata.csv File (containing list of files with grouping information"),
             card_body(
               # Sidebar panel for file upload
-              fileInput("metadatafile",
-                label = NULL,
-                multiple = FALSE,
-                accept = c(
-                  ".csv",
-                  ".txt"
-                )
-              ),
-
-              # Input: Select separator ----
-              radioButtons("sep", "Separator",
-                choices = c(
-                  Comma = ",",
-                  Semicolon = ";",
-                  Tab = "\t"
-                ),
-                selected = ","
-              ),
-              actionButton("upload_meta", "Upload metadata file"),
-            ),
+              fileInput("metadatafile", label = NULL, multiple = FALSE, accept = c(".csv",".txt")),
+              # Input: Select separator
+              radioButtons("sep", "Separator", choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = ","),
+              actionButton("upload_meta", "Upload metadata file")
+            )
           ),
-
-          # featureCount files upload
+          # FeatureCount files upload
           card(
-            card_header(
-              class = "bg-dark",
-              "Upload featurecount files",
-            ),
+            card_header(class = "bg-dark", "Upload featurecount files"),
             card_body(
-              fileInput("featurecountfiles",
-                label = NULL,
-                multiple = TRUE,
-                accept = c(
-                  ".csv",
-                  ".txt"
-                )
-              ),
-              actionButton("upload_featureCounts", "Upload featureCount files"),
-            ),
+              fileInput("featurecountfiles", label = NULL, multiple = TRUE, accept = c(".csv",".txt")),
+              actionButton("upload_featureCounts", "Upload featureCount files")
+            )
           ),
-
           # Default data upload
           card(
-            card_header(
-              class = "bg-dark",
-              "Practice with demo data",
-            ),
+            card_header(class = "bg-dark", "Practice with demo data"),
             card_body(
-              actionButton("demo_data", "Load demo data"),
-            ),
-          ),
+              actionButton("demo_data", "Load demo data")
+            )
+          )
         ),
-
-        # Show a plot of the generated distribution
+        # Main panel with data visualization
         mainPanel(
-          # h3("Exploratory Data Analysis"),
           layout_column_wrap(
             width = 1,
-            height = 340,
+            height = "50vh",
             fill = TRUE,
             heights_equal = "all",
-
-            # Metadata viewer
-            card(
-              full_screen = TRUE,
-              card_header(
-                "Metadata File"
-              ),
-              card_body_fill(
-                tableOutput("metadata_contents")
-              )
-            ),
-          ),
-          layout_column_wrap(
-            width = 1 / 2,
-            height = 340,
-            fill = TRUE,
-            heights_equal = "all",
-
-            # DGEList viewer
-            card(
-              full_screen = TRUE,
-              card_header(
-                "DGE Samples"
-              ),
-              card_body_fill(
-                tableOutput("dge_samples"),
-              )
-            ),
-            card(
-              full_screen = TRUE,
-              card_header(
-                "DGE Counts"
-              ),
-              card_body_fill(
-                DT::dataTableOutput("dge_counts"),
-              )
+            # Metadata file contents
+            card(full_screen = TRUE, card_header("Metadata File"), div(tableOutput("metadata_contents"))),
+            layout_column_wrap(
+              width = 1/2,
+              height = "50vh",
+              fill = TRUE,
+              heights_equal = "all",
+              # DGE Samples table
+              card(full_screen = TRUE, card_header("DGE Samples"), div(tableOutput("dge_samples"))),
+              # DGE Counts table
+              card(full_screen = TRUE, card_header("DGE Counts"), div(DT::dataTableOutput("dge_counts")))
             )
           )
         )
       )
     ),
+    
     tabPanel(
       "2. Exploratory data analysis",
       layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
+        width = 1/2,
+        height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header(textOutput("raw_text")),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header(textOutput("filter_text")),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
-        ),
+        # Raw text output
+        card(full_screen = TRUE, card_header(textOutput("raw_text")), div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary")))),
+        # Filtered text output
+        card(full_screen = TRUE, card_header(textOutput("filter_text")), div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
       ),
       layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
+        width = 1/3,
+        height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Raw gene expression"),
-          card_body_fill(plotOutput("raw_boxplot"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw relative level of expression"),
-          card_body_fill(plotOutput("raw_RLE"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw PCA"),
-          card_body_fill(plotOutput("raw_pca"))
-        ),
-      ),
+        # Raw gene expression plot
+        card(full_screen = TRUE, card_header("Raw gene expression"), div(plotOutput("raw_boxplot"))),
+        # Raw relative level of expression plot
+        card(full_screen = TRUE, card_header("Raw relative level of expression"), div(plotOutput("raw_RLE"))),
+        # Raw PCA plot
+        card(full_screen = TRUE, card_header("Raw PCA"), div(plotOutput("raw_pca")))
+      )
     ),
+    
     tabPanel(
       "3. Quantile normalization",
       layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
+        width = 1/2,
+        height = "33vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Summary of filtered data in step 2"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Summary of quantile normalized data in step 3"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
-        ),
+        # Summary of filtered data in step 2
+        card(full_screen = TRUE, card_header("Summary of filtered data in step 2"), div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2")))),
+        # Summary of quantile normalized data in step 3
+        card(full_screen = TRUE, card_header("Summary of quantile normalized data in step 3"), div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
       ),
       layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
+        width = 1/3,
+        height = "33vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Raw gene expression"),
-          card_body_fill(plotOutput("raw_boxplot2"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw relative level of expression"),
-          card_body_fill(plotOutput("raw_RLE2"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw PCA"),
-          card_body_fill(plotOutput("raw_pca2"))
-        ),
+        # Raw gene expression plot for step 2
+        card(full_screen = TRUE, card_header("Raw gene expression"), div(plotOutput("raw_boxplot2"))),
+        # Raw relative level of expression plot for step 2
+        card(full_screen = TRUE, card_header("Raw relative level of expression"), div(plotOutput("raw_RLE2"))),
+        # Raw PCA plot for step 2
+        card(full_screen = TRUE, card_header("Raw PCA"), div(plotOutput("raw_pca2")))
       ),
       layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
+        width = 1/3,
+        height = "33vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Quantile normalized gene expression"),
-          card_body_fill(plotOutput("norm_boxplot"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Quantile normalized relative level of expression"),
-          card_body_fill(plotOutput("norm_RLE"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Quantile normalized PCA"),
-          card_body_fill(plotOutput("norm_pca"))
-        ),
-      ),
+        # Quantile normalized gene expression plot
+        card(full_screen = TRUE, card_header("Quantile normalized gene expression"), div(plotOutput("norm_boxplot"))),
+        # Quantile normalized relative level of expression plot
+        card(full_screen = TRUE, card_header("Quantile normalized relative level of expression"), div(plotOutput("norm_RLE"))),
+        # Quantile normalized PCA plot
+        card(full_screen = TRUE, card_header("Quantile normalized PCA"), div(plotOutput("norm_pca")))
+      )
     ),
+    
     tabPanel(
       "4. TMM Normalization",
       layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
+        width = 1/2,
+        height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Effective library size"),
-          card_body_fill(div(span(style = "font-size: 12px;", tableOutput("eff_libsize"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("data after tagwise disperson (dT)"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
-        ),
+        # Effective library size table
+        card(full_screen = TRUE, card_header("Effective library size"), div(span(style = "font-size: 12px;", tableOutput("eff_libsize")))),
+        # Data after tagwise disperson (dT) output
+        card(full_screen = TRUE, card_header("Data after tagwise disperson (dT)"), div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
       ),
       layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
+        width = 1/3,
+        height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("BCV tagwise dispersion"),
-          card_body_fill(plotOutput("BCV_tagwise_dispersion"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Counts per million (cpm)"),
-          card_body_fill(DT::dataTableOutput("cpm_counts"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Log2 CPM counts"),
-          card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
-        ),
-      ),
+        # BCV tagwise dispersion plot
+        card(full_screen = TRUE, card_header("BCV tagwise dispersion"), div(plotOutput("BCV_tagwise_dispersion"))),
+        # Counts per million (cpm) table
+        card(full_screen = TRUE, card_header("Counts per million (cpm) (This table may take a while to load)"), div(DT::dataTableOutput("cpm_counts_table"))),
+        # Log2 CPM counts table
+        card(full_screen = TRUE, card_header("Log2Counts per million (log2cpm) (This table may take a while to load)"), div(DT::dataTableOutput("log2cpm_counts_table"))),
+      )
     ),
+    
+    
     tabPanel(
       "5. Data visualization",
-      "Content"
+      layout_column_wrap(
+        fill = TRUE,
+        heights_equal = "all",
+        card(full_screen = TRUE,
+          card_header("% total variance covered by each PC"),
+          div(plotOutput("percentVar_perPC"))
+        ),
+        # PCA graph
+        card(
+          full_screen = TRUE,
+          card_header("Principal Component Analysis"),
+          div(
+            selectInput("pc_number1", "Select the first PC:", choices = NULL),
+            selectInput("pc_number2", "Select the second PC:", choices = NULL),
+            plotOutput("pca_plot")
+          )
+        ),
+      )
     ),
+    
     tabPanel(
       "6. EdgeR Pairwise Analysis",
       "Content"
+      
+      # card(full_screen = TRUE, card_header("Check output"), div(span(style = "font-size: 12px;", verbatimTextOutput("pca_output"))))
     ),
     tabPanel(
       "7. Final outlook",
@@ -300,7 +212,7 @@ ui <- fluidPage(
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
   # Data and viz used for tab 1
 
   # Loading metadata table (data will be stored in metadata_df)
@@ -447,7 +359,7 @@ server <- function(input, output) {
   output$norm_summary <- renderPrint(
     summary(norm_data())
   )
-
+  
   output$norm_boxplot <- renderPlot(
     boxplot(norm_data(), outline = FALSE, main = "Normalized Boxplot", col = colors[g()], las = 2)
   )
@@ -460,58 +372,118 @@ server <- function(input, output) {
     plotPCA(norm_data(), main = "Normalized PCA", col = colors[g()], cex = 1.0)
   )
   # Tab 4: TMM Normalization
-  norm_DGE <- reactive({
+  norm_DGE_list <- reactive({
     norm_DGE <- DGEList(counts = norm_data(), group = g())
     norm_DGE <- calcNormFactors(norm_DGE)
     norm_DGE$samples$eff.lib.size <- norm_DGE$samples$lib.size * norm_DGE$samples$norm.factors # add effective library size
+    # Calculate CPM
+    norm_DGE$cpm <- cpm(norm_DGE)
     norm_DGE
   })
-
-  dC <- reactive(estimateCommonDisp(norm_DGE())) # estimates common dispersion
+  
+  dC <- reactive(estimateCommonDisp(norm_DGE_list())) # estimates common dispersion
   dT <- reactive(estimateTagwiseDisp(dC())) # estimate Tagwise dispersions
-
+  
   output$BCV_tagwise_dispersion <- renderPlot(
     plotBCV(dT(), main = "BCV Tagwise Dispersion")
   )
-
+  
   output$eff_libsize <- renderTable(
-    norm_DGE()$samples,
+    norm_DGE_list()$samples,
     rownames = TRUE,
     hover = TRUE
   )
-
+  
   output$dT_output <- renderPrint(
     dT()
   )
-
-  cpm_counts <- reactive(cpm(norm_DGE()))
-  log2_cpm_counts <- reactive(log2(cpm(norm_DGE())))
-
-  output$cpm_counts <- DT::renderDataTable(
-    cpm_counts() |>
-      round(2),
-    options = list(scrollX = TRUE)
-  )
-
-  output$log2_cpm_counts <- DT::renderDataTable(
-    log2_cpm_counts() |>
-      round(2),
-    options = list(scrollX = TRUE)
-  )
-
-  # output$dge_counts <- DT::renderDataTable(
-  #   data()$counts,
-  #   options = list(scrollX = TRUE)
-  # )
-  #
-  #
-  # output$check_output <- renderPrint(
-  #   dT()
-  # )
-
+  
+  # Output CPM table (This table may take a while to load)
+  output$cpm_counts_table <- DT::renderDataTable({
+    DT::datatable(norm_DGE_list()$cpm |> round(2), options = list(scrollX = TRUE))
+  })
+  
+  # Output log2(CPM) table (This table may take a while to load)
+  output$log2cpm_counts_table <- DT::renderDataTable({
+    DT::datatable(log2(norm_DGE_list()$cpm) |> round(2), options = list(scrollX = TRUE))
+  })
 
   # Tab 5: Data visualization
+  
+  # Calculate PCA data
+  pca_data <- reactive({
+    prcomp(t(log2(norm_DGE_list()$cpm)), center = TRUE, scale. = TRUE)
+  })
+  
+  # Calculate percent variance covered per PC
+  pca_percent_variance <- reactive({
+    pca_percent_variance <- data.frame(
+      variance = pca_data()$sdev^2
+    ) |>
+      mutate(
+        PC = 1:length(variance),
+        prop_variance = variance / sum(variance)
+      )
+    pca_percent_variance
+  })
+
+  # Plot for percent variance covered per PC
+  output$percentVar_perPC <- renderPlot({
+    ggplot(pca_percent_variance(), aes(x = PC, y = prop_variance)) +
+      geom_line(color = "blue") +
+      geom_text(
+        aes(
+          label = scales::percent(round(prop_variance, 2)),
+          x = PC, y = prop_variance + 0.01
+        ),
+        hjust = 0
+      ) +
+      scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+      labs(x = "Principal Component", y = "Percentage of variance covered") +
+      theme_bw()
+  })
+
+  # Generating a list of the principal components
+  pca_data_x <- reactive({
+    tryCatch({ # Adding a trycatch so that when the data is empty, we through a defauly PC1 and PC2 to bypass error warnings. 
+      num_cols <- ncol(pca_data()$x)
+      paste0("PC", 1:num_cols) |> as.list()
+    }, error = function(e) {
+      paste0("PC", 1:2) |> as.list()
+    })
+  })
+
+  # Update the choices for selectInput based on the number of principal components
+  observe({
+    updateSelectInput(session, "pc_number1", choices = pca_data_x(), selected = pca_data_x()[1])
+  })
+  observe({
+    updateSelectInput(session, "pc_number2", choices = pca_data_x(), selected = pca_data_x()[2])
+  })
+  
+  # Plot PCA graph
+  output$pca_plot <- renderPlot({
+    req(input$pc_number1, input$pc_number2)
+    pca_df <- pca_data()$x |> as.data.frame()
+    percentVariance <- pca_percent_variance()$prop_variance
+    ggplot(pca_df, aes_string(x = input$pc_number1, y = input$pc_number2)) +
+      geom_point(size=3, aes(color=g())) +
+      geom_text_repel(aes(label = rownames(pca_df), color=g())) +
+      labs(
+        x = paste0(input$pc_number1, " (", scales::percent(round(percentVariance[as.numeric(gsub("PC", "", input$pc_number1))], 2)), ")"),
+        y = paste0(input$pc_number2, " (", scales::percent(round(percentVariance[as.numeric(gsub("PC", "", input$pc_number2))], 2)), ")")
+      ) +
+      theme_bw() +
+      scale_color_brewer(name="Group", palette="Set2")
+  })
+  
+  
   # Tab 6: EdgeR Pairwise Analysis
+  
+  # output$pca_output <- renderPrint(
+  #   rownames(pca_data()$x |> as.data.frame())
+  # )
+  
   # Tab 7: Final outlook
 }
 
