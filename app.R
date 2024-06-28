@@ -63,7 +63,7 @@ ui <- fluidPage(
         mainPanel(
           layout_column_wrap(
             width = 1,
-            height = "50%",  # Adjusted height to take half of the window height
+            height = "50vh",
             fill = TRUE,
             heights_equal = "all",
             
@@ -71,7 +71,7 @@ ui <- fluidPage(
             
             layout_column_wrap(
               width = 1 / 2,
-              height = "50%",  # Adjusted height to take half of the window height
+              height = "50vh",
               fill = TRUE,
               heights_equal = "all",
               
@@ -82,46 +82,68 @@ ui <- fluidPage(
         )
       )
     ),
+    
     tabPanel(
       "2. Exploratory data analysis",
       layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
+        width = 1/2,
+        height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header(textOutput("raw_text")),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header(textOutput("filter_text")),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
-        ),
+        card(full_screen = TRUE, card_header(textOutput("raw_text")), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary"))))),
+        card(full_screen = TRUE, card_header(textOutput("filter_text")), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary")))))
       ),
       layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
+        width = 1/3,
+        height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("Raw gene expression"),
-          card_body_fill(plotOutput("raw_boxplot"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw relative level of expression"),
-          card_body_fill(plotOutput("raw_RLE"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Raw PCA"),
-          card_body_fill(plotOutput("raw_pca"))
-        ),
-      ),
+        card(full_screen = TRUE, card_header("Raw gene expression"), card_body_fill(plotOutput("raw_boxplot"))),
+        card(full_screen = TRUE, card_header("Raw relative level of expression"), card_body_fill(plotOutput("raw_RLE"))),
+        card(full_screen = TRUE, card_header("Raw PCA"), card_body_fill(plotOutput("raw_pca")))
+      )
     ),
+    
+    # tabPanel(
+    #   "2. Exploratory data analysis",
+    #   layout_column_wrap(
+    #     width = 1 / 2,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header(textOutput("raw_text")),
+    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary"))))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header(textOutput("filter_text")),
+    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
+    #     ),
+    #   ),
+    #   layout_column_wrap(
+    #     width = 1 / 3,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Raw gene expression"),
+    #       card_body_fill(plotOutput("raw_boxplot"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Raw relative level of expression"),
+    #       card_body_fill(plotOutput("raw_RLE"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Raw PCA"),
+    #       card_body_fill(plotOutput("raw_pca"))
+    #     ),
+    #   ),
+    # ),
     
     tabPanel(
       "3. Quantile normalization",
