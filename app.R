@@ -30,54 +30,54 @@ ui <- fluidPage(
     
     tabPanel(
       "1. File uploads",
-      # Sidebar with a slider input for number of bins
+      # Sidebar with file upload widgets
       sidebarLayout(
         sidebarPanel(
-          # metadata file upload
+          # Metadata file upload
           card(
-            card_header(class = "bg-dark", "Upload metadata.csv File (containing list of files with grouping information",),
+            card_header(class = "bg-dark", "Upload metadata.csv File (containing list of files with grouping information"),
             card_body(
               # Sidebar panel for file upload
               fileInput("metadatafile", label = NULL, multiple = FALSE, accept = c(".csv",".txt")),
-
-              # Input: Select separator ----
+              # Input: Select separator
               radioButtons("sep", "Separator", choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = ","),
-              actionButton("upload_meta", "Upload metadata file"),),
+              actionButton("upload_meta", "Upload metadata file")
+            )
           ),
-
-          # featureCount files upload
+          # FeatureCount files upload
           card(
-            card_header(class = "bg-dark", "Upload featurecount files",),
+            card_header(class = "bg-dark", "Upload featurecount files"),
             card_body(
               fileInput("featurecountfiles", label = NULL, multiple = TRUE, accept = c(".csv",".txt")),
-              actionButton("upload_featureCounts", "Upload featureCount files"),),
+              actionButton("upload_featureCounts", "Upload featureCount files")
+            )
           ),
-
           # Default data upload
           card(
-            card_header(class = "bg-dark","Practice with demo data",),
-            card_body(actionButton("demo_data", "Load demo data"),),
-          ),
+            card_header(class = "bg-dark", "Practice with demo data"),
+            card_body(
+              actionButton("demo_data", "Load demo data")
+            )
+          )
         ),
-
-        # Show a plot of the generated distribution
+        # Main panel with data visualization
         mainPanel(
           layout_column_wrap(
             width = 1,
             height = "50vh",
             fill = TRUE,
             heights_equal = "all",
-            
-            card(full_screen = TRUE, card_header("Metadata File"), card_body_fill(tableOutput("metadata_contents"))),
-            
+            # Metadata file contents
+            card(full_screen = TRUE, card_header("Metadata File"), div(tableOutput("metadata_contents"))),
             layout_column_wrap(
-              width = 1 / 2,
+              width = 1/2,
               height = "50vh",
               fill = TRUE,
               heights_equal = "all",
-              
-              card(full_screen = TRUE, card_header("DGE Samples"), card_body_fill(tableOutput("dge_samples"))),
-              card(full_screen = TRUE, card_header("DGE Counts"), card_body_fill(DT::dataTableOutput("dge_counts")))
+              # DGE Samples table
+              card(full_screen = TRUE, card_header("DGE Samples"), div(tableOutput("dge_samples"))),
+              # DGE Counts table
+              card(full_screen = TRUE, card_header("DGE Counts"), div(DT::dataTableOutput("dge_counts")))
             )
           )
         )
@@ -91,55 +91,89 @@ ui <- fluidPage(
         height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(full_screen = TRUE, card_header(textOutput("raw_text")), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary"))))),
-        card(full_screen = TRUE, card_header(textOutput("filter_text")), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary")))))
+        # Raw text output
+        card(full_screen = TRUE, card_header(textOutput("raw_text")), div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary")))),
+        # Filtered text output
+        card(full_screen = TRUE, card_header(textOutput("filter_text")), div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
       ),
       layout_column_wrap(
         width = 1/3,
         height = "50vh",
         fill = TRUE,
         heights_equal = "all",
-        card(full_screen = TRUE, card_header("Raw gene expression"), card_body_fill(plotOutput("raw_boxplot"))),
-        card(full_screen = TRUE, card_header("Raw relative level of expression"), card_body_fill(plotOutput("raw_RLE"))),
-        card(full_screen = TRUE, card_header("Raw PCA"), card_body_fill(plotOutput("raw_pca")))
+        # Raw gene expression plot
+        card(full_screen = TRUE, card_header("Raw gene expression"), div(plotOutput("raw_boxplot"))),
+        # Raw relative level of expression plot
+        card(full_screen = TRUE, card_header("Raw relative level of expression"), div(plotOutput("raw_RLE"))),
+        # Raw PCA plot
+        card(full_screen = TRUE, card_header("Raw PCA"), div(plotOutput("raw_pca")))
       )
     ),
     
     tabPanel(
       "3. Quantile normalization",
       layout_column_wrap(
-        width = 1/2, height = "33vh", fill = TRUE, heights_equal = "all",
-        card(full_screen = TRUE, card_header("Summary of filtered data in step 2"), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2"))))),
-        card(full_screen = TRUE, card_header("Summary of quantile normalized data in step 3"), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary")))))
+        width = 1/2,
+        height = "33vh",
+        fill = TRUE,
+        heights_equal = "all",
+        # Summary of filtered data in step 2
+        card(full_screen = TRUE, card_header("Summary of filtered data in step 2"), div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2")))),
+        # Summary of quantile normalized data in step 3
+        card(full_screen = TRUE, card_header("Summary of quantile normalized data in step 3"), div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
       ),
       layout_column_wrap(
-        width = 1/3, height = "33vh", fill = TRUE, heights_equal = "all",
-        card(full_screen = TRUE, card_header("Raw gene expression"), card_body_fill(plotOutput("raw_boxplot2"))),
-        card(full_screen = TRUE, card_header("Raw relative level of expression"), card_body_fill(plotOutput("raw_RLE2"))),
-        card(full_screen = TRUE, card_header("Raw PCA"), card_body_fill(plotOutput("raw_pca2")))
+        width = 1/3,
+        height = "33vh",
+        fill = TRUE,
+        heights_equal = "all",
+        # Raw gene expression plot for step 2
+        card(full_screen = TRUE, card_header("Raw gene expression"), div(plotOutput("raw_boxplot2"))),
+        # Raw relative level of expression plot for step 2
+        card(full_screen = TRUE, card_header("Raw relative level of expression"), div(plotOutput("raw_RLE2"))),
+        # Raw PCA plot for step 2
+        card(full_screen = TRUE, card_header("Raw PCA"), div(plotOutput("raw_pca2")))
       ),
       layout_column_wrap(
-        width = 1/3, height = "33vh", fill = TRUE, heights_equal = "all",
-        card(full_screen = TRUE, card_header("Quantile normalized gene expression"), card_body_fill(plotOutput("norm_boxplot"))),
-        card(full_screen = TRUE, card_header("Quantile normalized relative level of expression"), card_body_fill(plotOutput("norm_RLE"))),
-        card(full_screen = TRUE, card_header("Quantile normalized PCA"), card_body_fill(plotOutput("norm_pca")))
+        width = 1/3,
+        height = "33vh",
+        fill = TRUE,
+        heights_equal = "all",
+        # Quantile normalized gene expression plot
+        card(full_screen = TRUE, card_header("Quantile normalized gene expression"), div(plotOutput("norm_boxplot"))),
+        # Quantile normalized relative level of expression plot
+        card(full_screen = TRUE, card_header("Quantile normalized relative level of expression"), div(plotOutput("norm_RLE"))),
+        # Quantile normalized PCA plot
+        card(full_screen = TRUE, card_header("Quantile normalized PCA"), div(plotOutput("norm_pca")))
       )
     ),
     
     tabPanel(
       "4. TMM Normalization",
       layout_column_wrap(
-        width = 1/2, height = "50vh", fill = TRUE, heights_equal = "all",
-        card(full_screen = TRUE, card_header("Effective library size"), card_body_fill(div(span(style = "font-size: 12px;", tableOutput("eff_libsize"))))),
-        card(full_screen = TRUE, card_header("data after tagwise disperson (dT)"), card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output")))))
+        width = 1/2,
+        height = "50vh",
+        fill = TRUE,
+        heights_equal = "all",
+        # Effective library size table
+        card(full_screen = TRUE, card_header("Effective library size"), div(span(style = "font-size: 12px;", tableOutput("eff_libsize")))),
+        # Data after tagwise disperson (dT) output
+        card(full_screen = TRUE, card_header("data after tagwise disperson (dT)"), div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
       ),
       layout_column_wrap(
-        width = 1/3, height = "50vh", fill = TRUE, heights_equal = "all",
-        card(full_screen = TRUE, card_header("BCV tagwise dispersion"), card_body_fill(plotOutput("BCV_tagwise_dispersion"))),
-        card(full_screen = TRUE, card_header("Counts per million (cpm)"), card_body_fill(DT::dataTableOutput("cpm_counts"))),
-        card(full_screen = TRUE, card_header("Log2 CPM counts"), card_body_fill(DT::dataTableOutput("log2_cpm_counts")))
+        width = 1/3,
+        height = "50vh",
+        fill = TRUE,
+        heights_equal = "all",
+        # BCV tagwise dispersion plot
+        card(full_screen = TRUE, card_header("BCV tagwise dispersion"), div(plotOutput("BCV_tagwise_dispersion"))),
+        # Counts per million (cpm) table
+        card(full_screen = TRUE, card_header("Counts per million (cpm)"), div(DT::dataTableOutput("cpm_counts"))),
+        # Log2 CPM counts table
+        card(full_screen = TRUE, card_header("Log2 CPM counts"), div(DT::dataTableOutput("log2_cpm_counts")))
       )
     ),
+    
     
     tabPanel(
       "5. Data visualization",
@@ -176,12 +210,12 @@ ui <- fluidPage(
         card(
           full_screen = TRUE,
           card_header("Counts per million (cpm)"),
-          card_body_fill(DT::dataTableOutput("cpm_counts"))
+          card_body_fill(DT::dataTableOutput("cpm_counts_table"))
         ),
         card(
           full_screen = TRUE,
           card_header("Log2 CPM counts"),
-          card_body_fill(DT::dataTableOutput("log2_cpm_counts"))
+          card_body_fill(DT::dataTableOutput("log2_cpm_counts_table"))
         )
       )
     ),
@@ -385,13 +419,13 @@ server <- function(input, output, session) {
   cpm_counts <- reactive(cpm(norm_DGE()))
   log2_cpm_counts <- reactive(log2(cpm(norm_DGE())))
 
-  output$cpm_counts <- DT::renderDataTable(
+  output$cpm_counts_table <- DT::renderDataTable(
     cpm_counts() |>
       round(2),
     options = list(scrollX = TRUE)
   )
 
-  output$log2_cpm_counts <- DT::renderDataTable(
+  output$log2_cpm_counts_table <- DT::renderDataTable(
     log2_cpm_counts() |>
       round(2),
     options = list(scrollX = TRUE)
