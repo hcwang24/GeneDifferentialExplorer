@@ -175,50 +175,39 @@ ui <- fluidPage(
     ),
     
     
-    # tabPanel(
-    #   "5. Data visualization",
-    #   layout_column_wrap(
-    #     width = 1 / 2,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("% total variance covered by each PC"),
-    #       card_body_fill(plotOutput("percentVar_perPC"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Principal Component Analysis"),
-    #       card_body_fill(
-    #         selectInput("pc_number1", "Select the first PC:", choices = NULL),
-    #         selectInput("pc_number2", "Select the second PC:", choices = NULL),
-    #         plotOutput("pca_plot")
-    #       )
-    #     )
-    #   ),
-    #   layout_column_wrap(
-    #     width = 1 / 3,
-    #     height = 340,
-    #     fill = TRUE,
-    #     heights_equal = "all",
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("BCV tagwise dispersion"),
-    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Counts per million (cpm)"),
-    #       card_body_fill(DT::dataTableOutput("cpm_counts_table"))
-    #     ),
-    #     card(
-    #       full_screen = TRUE,
-    #       card_header("Log2 CPM counts"),
-    #       card_body_fill(DT::dataTableOutput("log2_cpm_counts_table"))
-    #     )
-    #   )
-    # ),
+    tabPanel(
+      "5. Data visualization",
+      layout_column_wrap(
+        width = 1/2,
+        height = "50vh",
+        fill = TRUE,
+        heights_equal = "all",
+        card(full_screen = TRUE,
+          card_header("% total variance covered by each PC"),
+          div(plotOutput("percentVar_perPC"))
+        ),
+        card(
+          full_screen = TRUE,
+          card_header("Principal Component Analysis"),
+          div(
+            selectInput("pc_number1", "Select the first PC:", choices = NULL),
+            selectInput("pc_number2", "Select the second PC:", choices = NULL),
+            plotOutput("pca_plot")
+          )
+        )
+      ),
+      layout_column_wrap(
+        width = 1/2,
+        height = "50vh",
+        fill = TRUE,
+        heights_equal = "all",
+        # Percent Variance per Principal Component
+        # card(full_screen = TRUE, card_header("Percent Variance per Principal Component"), div(plotOutput("percentVar_perPC"))),
+        # PCA graph
+        card(full_screen = TRUE, card_header("PCA graph"), div(plotOutput("pca_plot"))),
+        card(full_screen = TRUE, card_header("Check output"), div(span(style = "font-size: 12px;", verbatimTextOutput("pca_output"))))
+      )
+    ),
     
     tabPanel(
       "6. EdgeR Pairwise Analysis",
@@ -429,10 +418,105 @@ server <- function(input, output, session) {
   })
 
   # Tab 5: Data visualization
-  # calculate PCA data
+  
+  # Calculate PCA data
+  pca_data <- reactive({
+    prcomp(t(log2(norm_DGE_list()$cpm)), center = TRUE, scale. = TRUE)
+  })
+  
+  # Calculate percent variance covered per PC
+  pca_percent_variance <- reactive({
+    pca_percent_variance <- data.frame(
+      variance = pca_data()$sdev^2
+    ) |>
+      mutate(
+        PC = 1:length(variance),
+        prop_variance = variance / sum(variance)
+      )
+    pca_percent_variance
+  })
+
+  # Plot for percent variance covered per PC
+  output$percentVar_perPC <- renderPlot({
+    ggplot(pca_percent_variance(), aes(x = PC, y = prop_variance)) +
+      geom_line(color = "blue") +
+      geom_text(
+        aes(
+          label = scales::percent(round(prop_variance, 2)),
+          x = PC, y = prop_variance + 0.01
+        ),
+        hjust = 0
+      ) +
+      scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+      labs(x = "Principal Component", y = "Percentage of variance covered") +
+      theme_bw()
+  })
+
+  # # Generating a list of the principal components
+  # pca_data_x <- reactive({
+  #   colnames(pca_data()$x)
+  # })
+
+  pca_data_x <- reactive({
+    list("PC1", "PC2", "PC3", "PC4", "PC5")
+  })
+
+  # Update the choices for selectInput based on the number of principal components
+  observe({
+    updateSelectInput(session, "pc_number1", choices = pca_data_x(), selected = pca_data_x()[1])
+  })
+  observe({
+    updateSelectInput(session, "pc_number2", choices = pca_data_x(), selected = pca_data_x()[2])
+  })
+
+    # # Define a reactive list
+    # data_list <- reactive({
+    #   list("Item 1", "Item 2", "Item 3", "Item 4")
+    # })
+    # 
+    # # Update selectInput choices based on data_list
+    # observe({
+    #   updateSelectInput(session, "selected_item", choices = data_list())
+    # })
+    # 
+    # # Observer for selected item
+    # observe({
+    #   selected <- input$selected_item
+    #   # Do something with the selected item, e.g., print it
+    #   cat("Selected item:", selected, "\n")
+    #   # You can perform other actions based on the selected item here
+    # })
+  
+  # 
+  # output$pca_output <- renderPrint(
+  #   colnames(pca_data()$x)[3]
+  # )
+
+  # Plot PCA graph
+  output$pca_plot <- renderPlot({
+    req(input$pc_number1, input$pc_number2)
+    pca_data()$x |>
+      as.data.frame() |>
+      ggplot(aes_string(x = input$pc_number1, y = input$pc_number2)) +
+        geom_point(size=3) +
+        # labs(x = paste0("PC1 (", percent(percentVariance[1]/sum(percentVariance)),")"), y = paste0("PC2 (", percent(percentVariance[2]/sum(percentVariance)),")")) +
+        # geom_point(size=3, aes(color=factor_genotype, shape=factor_treatment)) +
+        # geom_text_repel(size=2, aes(label = rownames(pca_data_restricted), color=factor_genotype)) +
+        theme_bw()
+        # scale_color_brewer(name="Genotype", palette="Set2") +
+        # scale_shape_discrete(name="Treatment")
+  })
+  
+  
+  
+  # 
+  # # Tab 5: Data visualization
+  # # calculate PCA data
   # pca_data <- reactive({
-  #   prcomp(t(log2_cpm_counts()), center = TRUE, scale. = TRUE)
+  #   prcomp(t(log2(norm_DGE_list()$cpm)), center = TRUE, scale. = TRUE)
   #   })
+  # 
+  # # Generating a list of the principal components
   # pca_data_x <- reactive({
   #   colnames(pca_data()$x)
   # })
