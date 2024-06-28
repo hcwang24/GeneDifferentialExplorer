@@ -158,7 +158,7 @@ ui <- fluidPage(
         # Effective library size table
         card(full_screen = TRUE, card_header("Effective library size"), div(span(style = "font-size: 12px;", tableOutput("eff_libsize")))),
         # Data after tagwise disperson (dT) output
-        card(full_screen = TRUE, card_header("data after tagwise disperson (dT)"), div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
+        card(full_screen = TRUE, card_header("Data after tagwise disperson (dT)"), div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
       ),
       layout_column_wrap(
         width = 1/3,
@@ -168,57 +168,57 @@ ui <- fluidPage(
         # BCV tagwise dispersion plot
         card(full_screen = TRUE, card_header("BCV tagwise dispersion"), div(plotOutput("BCV_tagwise_dispersion"))),
         # Counts per million (cpm) table
-        card(full_screen = TRUE, card_header("Counts per million (cpm)"), div(DT::dataTableOutput("cpm_counts"))),
+        card(full_screen = TRUE, card_header("Counts per million (cpm) (This table may take a while to load)"), div(DT::dataTableOutput("cpm_counts_table"))),
         # Log2 CPM counts table
-        card(full_screen = TRUE, card_header("Log2 CPM counts"), div(DT::dataTableOutput("log2_cpm_counts")))
+        card(full_screen = TRUE, card_header("Log2Counts per million (log2cpm) (This table may take a while to load)"), div(DT::dataTableOutput("log2cpm_counts_table"))),
       )
     ),
     
     
-    tabPanel(
-      "5. Data visualization",
-      layout_column_wrap(
-        width = 1 / 2,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("% total variance covered by each PC"),
-          card_body_fill(plotOutput("percentVar_perPC"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Principal Component Analysis"),
-          card_body_fill(
-            selectInput("pc_number1", "Select the first PC:", choices = NULL),
-            selectInput("pc_number2", "Select the second PC:", choices = NULL),
-            plotOutput("pca_plot")
-          )
-        )
-      ),
-      layout_column_wrap(
-        width = 1 / 3,
-        height = 340,
-        fill = TRUE,
-        heights_equal = "all",
-        card(
-          full_screen = TRUE,
-          card_header("BCV tagwise dispersion"),
-          card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Counts per million (cpm)"),
-          card_body_fill(DT::dataTableOutput("cpm_counts_table"))
-        ),
-        card(
-          full_screen = TRUE,
-          card_header("Log2 CPM counts"),
-          card_body_fill(DT::dataTableOutput("log2_cpm_counts_table"))
-        )
-      )
-    ),
+    # tabPanel(
+    #   "5. Data visualization",
+    #   layout_column_wrap(
+    #     width = 1 / 2,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("% total variance covered by each PC"),
+    #       card_body_fill(plotOutput("percentVar_perPC"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Principal Component Analysis"),
+    #       card_body_fill(
+    #         selectInput("pc_number1", "Select the first PC:", choices = NULL),
+    #         selectInput("pc_number2", "Select the second PC:", choices = NULL),
+    #         plotOutput("pca_plot")
+    #       )
+    #     )
+    #   ),
+    #   layout_column_wrap(
+    #     width = 1 / 3,
+    #     height = 340,
+    #     fill = TRUE,
+    #     heights_equal = "all",
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("BCV tagwise dispersion"),
+    #       card_body_fill(div(span(style = "font-size: 12px;", verbatimTextOutput("check_output"))))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Counts per million (cpm)"),
+    #       card_body_fill(DT::dataTableOutput("cpm_counts_table"))
+    #     ),
+    #     card(
+    #       full_screen = TRUE,
+    #       card_header("Log2 CPM counts"),
+    #       card_body_fill(DT::dataTableOutput("log2_cpm_counts_table"))
+    #     )
+    #   )
+    # ),
     
     tabPanel(
       "6. EdgeR Pairwise Analysis",
@@ -379,7 +379,7 @@ server <- function(input, output, session) {
   output$norm_summary <- renderPrint(
     summary(norm_data())
   )
-
+  
   output$norm_boxplot <- renderPlot(
     boxplot(norm_data(), outline = FALSE, main = "Normalized Boxplot", col = colors[g()], las = 2)
   )
@@ -392,44 +392,41 @@ server <- function(input, output, session) {
     plotPCA(norm_data(), main = "Normalized PCA", col = colors[g()], cex = 1.0)
   )
   # Tab 4: TMM Normalization
-  norm_DGE <- reactive({
+  norm_DGE_list <- reactive({
     norm_DGE <- DGEList(counts = norm_data(), group = g())
     norm_DGE <- calcNormFactors(norm_DGE)
     norm_DGE$samples$eff.lib.size <- norm_DGE$samples$lib.size * norm_DGE$samples$norm.factors # add effective library size
+    # Calculate CPM
+    norm_DGE$cpm <- cpm(norm_DGE)
     norm_DGE
   })
-
-  dC <- reactive(estimateCommonDisp(norm_DGE())) # estimates common dispersion
+  
+  dC <- reactive(estimateCommonDisp(norm_DGE_list())) # estimates common dispersion
   dT <- reactive(estimateTagwiseDisp(dC())) # estimate Tagwise dispersions
-
+  
   output$BCV_tagwise_dispersion <- renderPlot(
     plotBCV(dT(), main = "BCV Tagwise Dispersion")
   )
-
+  
   output$eff_libsize <- renderTable(
-    norm_DGE()$samples,
+    norm_DGE_list()$samples,
     rownames = TRUE,
     hover = TRUE
   )
-
+  
   output$dT_output <- renderPrint(
     dT()
   )
-
-  cpm_counts <- reactive(cpm(norm_DGE()))
-  log2_cpm_counts <- reactive(log2(cpm(norm_DGE())))
-
-  output$cpm_counts_table <- DT::renderDataTable(
-    cpm_counts() |>
-      round(2),
-    options = list(scrollX = TRUE)
-  )
-
-  output$log2_cpm_counts_table <- DT::renderDataTable(
-    log2_cpm_counts() |>
-      round(2),
-    options = list(scrollX = TRUE)
-  )
+  
+  # Output CPM table (This table may take a while to load)
+  output$cpm_counts_table <- DT::renderDataTable({
+    DT::datatable(norm_DGE_list()$cpm |> round(2), options = list(scrollX = TRUE))
+  })
+  
+  # Output log2(CPM) table (This table may take a while to load)
+  output$log2cpm_counts_table <- DT::renderDataTable({
+    DT::datatable(log2(norm_DGE_list()$cpm) |> round(2), options = list(scrollX = TRUE))
+  })
 
   # Tab 5: Data visualization
   # calculate PCA data
