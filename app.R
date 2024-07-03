@@ -220,7 +220,7 @@ ui <- fluidPage(
           # Comparison results table
           card(full_screen = TRUE, card_header("Comparison table"), div(DT::dataTableOutput("results"))),
           # Volcano plot
-          card(full_screen = TRUE, card_header("Volcano plot with Significance(FC>=+/-1.5 FDR<=0.01)"), div(plotOutput("volcanoPlot")))
+          card(full_screen = TRUE, card_header("Volcano plot with Significance(FC>=+/-1.5 FDR<=0.01)"), div(plotlyOutput("volcanoPlot")))
         )
       )
     ),
@@ -569,24 +569,20 @@ server <- function(input, output, session) {
                                       ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == -1, "blue", "grey"))
       
       # Create volcano plot using ggplot2
-      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), color = color)) +
-        geom_point(size = 3) +
-        scale_color_identity(guide = "legend", labels = c("Not significant", "Significant (FC>= +1.5 FDR<=0.01)", "Significant (FC>= -1.5 FDR<=0.01)"),
-                             breaks = c("grey", "red", "blue"),
-                             limits = c("grey", "red", "blue")) +
+      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), color = color, text = paste("Gene:", rownames(de_result_table), ". FC", round(FC, 2), ". Log2 FC", round(logFC, 2), ". FDR", scales::scientific(FDR, digits = 2)))) +
+        geom_point(size = 1.5) +
+        scale_color_manual(values = c("grey" = "grey", "red" = "red", "blue" = "blue"),
+                           guide = guide_legend(title = "Significance Levels", override.aes = list(shape = NA)),
+                           labels = c("Not significant", "Significant (FC>= +1.5 FDR<=0.01)", "Significant (FC>= -1.5 FDR<=0.01)")) +
         labs(x = "Log Fold Change (logFC)", y = "-log10(FDR)",
-             title = "Volcano Plot") +
-        theme_minimal()
+             title = paste(basefactor_name, "vs", treatedfactor_name, "Volcano Plot")) +
+        theme_minimal() +
+        theme(plot.title = element_text(size = 8))  # Adjust title font size
       
-      # Label top and bottom 10 genes based on logFC using ggrepel
-      top_genes <- de_result_table[order(de_result_table$logFC, decreasing = TRUE), ][1:10, ]
-      bottom_genes <- de_result_table[order(de_result_table$logFC, decreasing = FALSE), ][1:10, ]
-      
-      volcano_plot <- volcano_plot +
-        geom_text_repel(data = rbind(top_genes, bottom_genes),
-                        aes(label = rownames(rbind(top_genes, bottom_genes))), box.padding = 0.5, point.padding = 0.5, size = 6)
-      
-      output$volcanoPlot <- renderPlot({volcano_plot})
+      # Convert ggplot to plotly for interactivity
+      output$volcanoPlot <- renderPlotly({
+        ggplotly(volcano_plot, tooltip = c("text"))
+      })
     }
   })
 
