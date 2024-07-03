@@ -202,20 +202,23 @@ ui <- fluidPage(
       "6. EdgeR Pairwise Analysis",
       sidebarLayout(
         sidebarPanel(
-          selectInput("basefactor", "Select base factor group (single choice only. If needed, update the group names in the input metadata.csv)", choices = NULL, multiple = FALSE),
-          textInput("basefactor_name", "Name for the baseline group (for example, WT in KO vs WT group)", value = "Baseline"),
-          
+          # Treatment group selection
           selectInput("treatedfactor", "Select treated factor group (single choice only) ", choices = NULL, multiple = FALSE),
           textInput("treatedfactor_name", "Name for the treated group (for example, KO in KO vs WT group)", value = "Treatment"),
-          
-          actionButton("compare", "Compare")
-        ),
-        
-        mainPanel(
+          # Baseline group selection
+          selectInput("basefactor", "Select base factor group (single choice only. If needed, update the group names in the input metadata.csv)", choices = NULL, multiple = FALSE),
+          textInput("basefactor_name", "Name for the baseline group (for example, WT in KO vs WT group)", value = "Baseline"),
+          # Start comparison
+          actionButton("compare", "Compare"),
           # Metadata overview aiding users to select the groups
           card(full_screen = TRUE, card_header("Metadata Overview"), div(span(style = "font-size: 12px;", verbatimTextOutput("sample_overview")))),
+        ),
+        mainPanel(
+          # Display the comparison text
+          tags$style(HTML("#comparison_text {font-size: 20pt;}")),
+          textOutput("comparison_text"),
           # Comparison results table
-          card(full_screen = TRUE, card_header("Comparison results"), div(DT::dataTableOutput("results"))),
+          card(full_screen = TRUE, card_header("Comparison table"), div(DT::dataTableOutput("results"))),
           plotOutput("volcanoPlot")
         )
       )
@@ -522,6 +525,11 @@ server <- function(input, output, session) {
     
     basefactor_name <- input$basefactor_name
     treatedfactor_name <- input$treatedfactor_name
+    
+    # Output the comparison test name
+    output$comparison_text <- renderText(
+      paste("Comparing", treatedfactor_name, "vs", basefactor_name), 
+    )
     
     # Ensure that both groups are selected and have elements
     if (length(basefactor) > 0 && length(treatedfactor) > 0) {
