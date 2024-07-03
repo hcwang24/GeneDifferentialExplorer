@@ -220,7 +220,15 @@ ui <- fluidPage(
           # Comparison results table
           card(full_screen = TRUE, card_header("Comparison table"), div(DT::dataTableOutput("results"))),
           # Volcano plot
-          card(full_screen = TRUE, card_header("Volcano plot with Significance(FC>=+/-1.5 FDR<=0.01)"), div(plotlyOutput("volcanoPlot")))
+          card(
+            full_screen = TRUE, 
+            card_header("Volcano plot (default significance FC>=+/-1.5 FDR<=0.01)"), 
+            div(
+              numericInput("fc_cutoff", "Fold Change Cutoff", value = 1.5),
+              numericInput("fdr_cutoff", "FDR Cutoff", value = 0.01),
+              plotlyOutput("volcanoPlot")
+            )
+          )
         )
       )
     ),
@@ -542,8 +550,17 @@ server <- function(input, output, session) {
       de_result_table <- topTags(et_result, n = nrow(dT()$counts), adjust.method = "BH", sort.by = "p.value")$table
       
       # Add significance test columns
-      de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` <- ifelse(de_result_table$logFC <= -log2(1.5), ifelse(de_result_table$FDR <= 0.01, -1, 0), ifelse(de_result_table$logFC >= log2(1.5), ifelse(de_result_table$FDR <= 0.01, 1, 0), 0))
-      de_result_table$`Significance(FC>=+/-2 FDR<=0.05)` <- ifelse(de_result_table$logFC <= -log2(2), ifelse(de_result_table$FDR <= 0.05, -1, 0), ifelse(de_result_table$logFC >= log2(2), ifelse(de_result_table$FDR <= 0.05, 1, 0), 0))
+      de_result_table <- de_result_table |>
+        mutate(`Significance(FC>=+/-1.5 FDR<=0.01)` = case_when(
+          logFC <= -log2(1.5) & FDR <= 0.01 ~ -1,
+          logFC >= log2(1.5) & FDR <= 0.01 ~ 1,
+          TRUE ~ 0
+        ),
+        `Significance(FC>=+/-2 FDR<=0.05)` = case_when(
+          logFC <= -log2(2) & FDR <= 0.05 ~ -1,
+          logFC >= log2(2) & FDR <= 0.05 ~ 1,
+          TRUE ~ 0
+        ))
       
       # Insert Fold Change column
       de_result_table$FC <- 2^de_result_table$logFC
@@ -559,27 +576,21 @@ server <- function(input, output, session) {
         DT::datatable(de_result_table |> mutate(FC = round(FC, 2), logFC = round(logFC, 2), PValue = scales::scientific(PValue, digits = 2), FDR = scales::scientific(FDR, digits = 2)), options = list(scrollX = TRUE))
       })
       
-      # Generate Volcano plot
-      # output$volcanoPlot <- renderPlot({
-      #   plot(de_result_table$logFC, -log10(de_result_table$FDR), xlab = "Log Fold Change", ylab = "-log10FDR", main = paste(treatedfactor_name, "vs", basefactor_name, "Tagwise Dispersion"), pch = 19, cex = 0.2)
-      # })
-      
-      # Define colors based on significance
-      de_result_table$color <- ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == 1, "red",
-                                      ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == -1, "blue", "grey"))
-      
-      de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` <- as.factor(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)`)
-      
-      # Create volcano plot using ggplot2
-      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), color = `Significance(FC>=+/-1.5 FDR<=0.01)`, text = paste("Gene:", rownames(de_result_table), ". FC", round(FC, 2), ". Log2 FC", round(logFC, 2), ". FDR", scales::scientific(FDR, digits = 2)))) +
+      # Create volcano plot using ggplotly
+      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), 
+                                                  color = factor(
+                                                    case_when(
+                                                      logFC <= -log2(input$fc_cutoff) & FDR <= input$fdr_cutoff ~ "-1",
+                                                      logFC >= log2(input$fc_cutoff) & FDR <= input$fdr_cutoff ~ "1",
+                                                      TRUE ~ "0"
+                                                    )),
+                                                  text = paste("Gene:", rownames(de_result_table), ". FC", round(FC, 2), ". Log2 FC", round(logFC, 2), ". FDR", scales::scientific(FDR, digits = 2)))) +
         geom_point(size = 1.5) +
         scale_color_manual(values = c("0" = "grey", "1" = "red", "-1" = "blue"),
-                           guide = guide_legend(title = "Significance Levels", override.aes = list(shape = NA)),
-                           labels = c("Not significant", "Significant (FC>= +1.5 FDR<=0.01)", "Significant (FC>= -1.5 FDR<=0.01)")) +
+                           guide = guide_legend(title = "Significance Levels", override.aes = list(shape = NA))) +
         labs(x = "Log Fold Change (logFC)", y = "-log10(FDR)",
-             title = paste(basefactor_name, "vs", treatedfactor_name, "Volcano Plot")) +
-        theme_minimal() +
-        theme(plot.title = element_text(size = 8))  # Adjust title font size
+             title = paste(treatedfactor_name, "vs", basefactor_name, "Volcano Plot")) +
+        theme_minimal()
       
       # Convert ggplot to plotly for interactivity
       output$volcanoPlot <- renderPlotly({
