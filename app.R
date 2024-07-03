@@ -598,6 +598,8 @@ server <- function(input, output, session) {
       })
     }
   })
+  
+  ## Notes: THings to consider 1) add a way to do multiple comparisons instead of just one. 2) Find a way to collect all outputs and consider what to put in tab 7.
 
   # Tab 6: EdgeR Pairwise Analysis
   
