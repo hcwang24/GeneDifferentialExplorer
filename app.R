@@ -203,10 +203,10 @@ ui <- fluidPage(
       sidebarLayout(
         sidebarPanel(
           # Treatment group selection
-          selectInput("treatedfactor", "Select treated factor group (single choice only) ", choices = NULL, multiple = FALSE),
-          textInput("treatedfactor_name", "Name for the treated group (for example, KO in KO vs WT group)", value = "Treatment"),
+          selectInput("treatedfactor", "Select treated factor group (single choice only. For example, KO in KO vs WT group. If needed, update the group names in the input metadata.csv)", choices = NULL, multiple = FALSE),
+          textInput("treatedfactor_name", "Name for the treated group", value = "Treatment"),
           # Baseline group selection
-          selectInput("basefactor", "Select base factor group (single choice only. If needed, update the group names in the input metadata.csv)", choices = NULL, multiple = FALSE),
+          selectInput("basefactor", "Select base factor group  (single choice only. For example, WT in KO vs WT group)", choices = NULL, multiple = FALSE),
           textInput("basefactor_name", "Name for the baseline group (for example, WT in KO vs WT group)", value = "Baseline"),
           # Start comparison
           actionButton("compare", "Compare"),
@@ -219,7 +219,8 @@ ui <- fluidPage(
           textOutput("comparison_text"),
           # Comparison results table
           card(full_screen = TRUE, card_header("Comparison table"), div(DT::dataTableOutput("results"))),
-          plotOutput("volcanoPlot")
+          # Volcano plot
+          card(full_screen = TRUE, card_header("Volcano plot with Significance(FC>=+/-1.5 FDR<=0.01)"), div(plotOutput("volcanoPlot")))
         )
       )
     ),
@@ -559,9 +560,33 @@ server <- function(input, output, session) {
       })
       
       # Generate Volcano plot
-      output$volcanoPlot <- renderPlot({
-        plot(de_result_table$logFC, -log10(de_result_table$FDR), xlab = "Log Fold Change", ylab = "-log10FDR", main = paste(treatedfactor_name, "vs", basefactor_name, "Tagwise Dispersion"), pch = 19, cex = 0.2)
-      })
+      # output$volcanoPlot <- renderPlot({
+      #   plot(de_result_table$logFC, -log10(de_result_table$FDR), xlab = "Log Fold Change", ylab = "-log10FDR", main = paste(treatedfactor_name, "vs", basefactor_name, "Tagwise Dispersion"), pch = 19, cex = 0.2)
+      # })
+      
+      # Define colors based on significance
+      de_result_table$color <- ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == 1, "red",
+                                      ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == -1, "blue", "grey"))
+      
+      # Create volcano plot using ggplot2
+      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), color = color)) +
+        geom_point(size = 3) +
+        scale_color_identity(guide = "legend", labels = c("Not significant", "Significant (FC>= +1.5 FDR<=0.01)", "Significant (FC>= -1.5 FDR<=0.01)"),
+                             breaks = c("grey", "red", "blue"),
+                             limits = c("grey", "red", "blue")) +
+        labs(x = "Log Fold Change (logFC)", y = "-log10(FDR)",
+             title = "Volcano Plot") +
+        theme_minimal()
+      
+      # Label top and bottom 10 genes based on logFC using ggrepel
+      top_genes <- de_result_table[order(de_result_table$logFC, decreasing = TRUE), ][1:10, ]
+      bottom_genes <- de_result_table[order(de_result_table$logFC, decreasing = FALSE), ][1:10, ]
+      
+      volcano_plot <- volcano_plot +
+        geom_text_repel(data = rbind(top_genes, bottom_genes),
+                        aes(label = rownames(rbind(top_genes, bottom_genes))), box.padding = 0.5, point.padding = 0.5, size = 6)
+      
+      output$volcanoPlot <- renderPlot({volcano_plot})
     }
   })
 
