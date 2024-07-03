@@ -568,10 +568,12 @@ server <- function(input, output, session) {
       de_result_table$color <- ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == 1, "red",
                                       ifelse(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` == -1, "blue", "grey"))
       
+      de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)` <- as.factor(de_result_table$`Significance(FC>=+/-1.5 FDR<=0.01)`)
+      
       # Create volcano plot using ggplot2
-      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), color = color, text = paste("Gene:", rownames(de_result_table), ". FC", round(FC, 2), ". Log2 FC", round(logFC, 2), ". FDR", scales::scientific(FDR, digits = 2)))) +
+      volcano_plot <- ggplot(de_result_table, aes(x = logFC, y = -log10(FDR), color = `Significance(FC>=+/-1.5 FDR<=0.01)`, text = paste("Gene:", rownames(de_result_table), ". FC", round(FC, 2), ". Log2 FC", round(logFC, 2), ". FDR", scales::scientific(FDR, digits = 2)))) +
         geom_point(size = 1.5) +
-        scale_color_manual(values = c("grey" = "grey", "red" = "red", "blue" = "blue"),
+        scale_color_manual(values = c("0" = "grey", "1" = "red", "-1" = "blue"),
                            guide = guide_legend(title = "Significance Levels", override.aes = list(shape = NA)),
                            labels = c("Not significant", "Significant (FC>= +1.5 FDR<=0.01)", "Significant (FC>= -1.5 FDR<=0.01)")) +
         labs(x = "Log Fold Change (logFC)", y = "-log10(FDR)",
