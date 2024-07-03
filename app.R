@@ -202,18 +202,20 @@ ui <- fluidPage(
       "6. EdgeR Pairwise Analysis",
       sidebarLayout(
         sidebarPanel(
-          selectInput("basefactor", "Select base factor group", choices = NULL, multiple = TRUE),
+          selectInput("basefactor", "Select base factor group (single choice only. If needed, update the group names in the input metadata.csv)", choices = NULL, multiple = FALSE),
           textInput("basefactor_name", "Name for the baseline group (for example, WT in KO vs WT group)", value = "Baseline"),
           
-          selectInput("treatedfactor", "Select treated factor group", choices = NULL, multiple = TRUE),
+          selectInput("treatedfactor", "Select treated factor group (single choice only) ", choices = NULL, multiple = FALSE),
           textInput("treatedfactor_name", "Name for the treated group (for example, KO in KO vs WT group)", value = "Treatment"),
           
           actionButton("compare", "Compare")
         ),
         
         mainPanel(
-          card(full_screen = TRUE, card_header("Data Overview"), div(span(style = "font-size: 12px;", verbatimTextOutput("sample_overview")))),
-          tableOutput("results"),
+          # Metadata overview aiding users to select the groups
+          card(full_screen = TRUE, card_header("Metadata Overview"), div(span(style = "font-size: 12px;", verbatimTextOutput("sample_overview")))),
+          # Comparison results table
+          card(full_screen = TRUE, card_header("Comparison results"), div(DT::dataTableOutput("results"))),
           plotOutput("volcanoPlot")
         )
       )
@@ -502,7 +504,7 @@ server <- function(input, output, session) {
   sample_groups <- reactive({
     # Adding a trycatch so that when the data is empty, we through a default PC1 and PC2 to bypass error warnings. 
     tryCatch({
-      sample_groups <- unique(dT()$samples$group)
+      sample_groups <- sort(unique(dT()$samples$group))
     }, error = function(e) {
       sample_groups <- c("Check your input file to include factors")
     })
@@ -510,8 +512,8 @@ server <- function(input, output, session) {
   
   # Update the choices for selectInput based on the sample groups
   observe({
-    updateSelectInput(session, "basefactor", choices = sample_groups(), selected = sample_groups()[1])
-    updateSelectInput(session, "treatedfactor", choices = sample_groups(), selected = sample_groups()[2])
+    updateSelectInput(session, "basefactor", choices = sample_groups(), selected = sample_groups()[length(sample_groups())])
+    updateSelectInput(session, "treatedfactor", choices = sample_groups(), selected = sample_groups()[1])
   })
   
   observeEvent(input$compare, {
@@ -541,16 +543,16 @@ server <- function(input, output, session) {
       de_result_table <- de_result_table[c("FC", "logFC", "PValue", "FDR", "Significance(FC>=+/-1.5 FDR<=0.01)", "Significance(FC>=+/-2 FDR<=0.05)")]
       
       # Save results to file
-      # write.table(de_result_table, file = paste0("DGE_", basefactor_name, "_vs_", treatedfactor_name, "_TagDisp.txt"), sep = "\t")
+      # write.table(de_result_table, file = paste0("DGE_", treatedfactor_name, "_vs_", basefactor_name, "_TagDisp.txt"), sep = "\t")
       
       # Output results table
-      output$results <- renderTable({
-        de_result_table
+      output$results <- DT::renderDataTable({
+        DT::datatable(de_result_table |> mutate(FC = round(FC, 2), logFC = round(logFC, 2), PValue = scales::scientific(PValue, digits = 2), FDR = scales::scientific(FDR, digits = 2)), options = list(scrollX = TRUE))
       })
       
       # Generate Volcano plot
       output$volcanoPlot <- renderPlot({
-        plot(de_result_table$logFC, -log10(de_result_table$FDR), xlab = "Log Fold Change", ylab = "-log10FDR", main = paste(basefactor_name, "vs", treatedfactor_name, "Tagwise Dispersion"), pch = 19, cex = 0.2)
+        plot(de_result_table$logFC, -log10(de_result_table$FDR), xlab = "Log Fold Change", ylab = "-log10FDR", main = paste(treatedfactor_name, "vs", basefactor_name, "Tagwise Dispersion"), pch = 19, cex = 0.2)
       })
     }
   })
