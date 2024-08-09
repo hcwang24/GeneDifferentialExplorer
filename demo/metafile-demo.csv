@@ -1,0 +1,8 @@
+files,genotype,cells,group
+preB_KO1_featurecounts.txt,KO,preB,KO-preB
+preB_KO2_featurecounts.txt,KO,preB,KO-preB
+preB_KO3_featurecounts.txt,KO,preB,KO-preB
+preB_KO4_featurecounts.txt,KO,preB,KO-preB
+preB_WT2_featurecounts.txt,WT,preB,WT-preB
+preB_WT3_featurecounts.txt,WT,preB,WT-preB
+preB_WT4_featurecounts.txt,WT,preB,WT-preB
