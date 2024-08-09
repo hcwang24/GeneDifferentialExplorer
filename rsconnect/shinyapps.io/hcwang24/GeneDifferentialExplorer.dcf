@@ -1,0 +1,12 @@
+name: GeneDifferentialExplorer
+title: GeneDifferentialExplorer
+username:
+account: hcwang24
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8658665
+bundleId: 8829570
+url: https://hcwang24.shinyapps.io/GeneDifferentialExplorer/
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rprofile|Bap1KO_rna_seq_processing.r|LICENSE|README.md|renv.lock|trial.R|demo copy

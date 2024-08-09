@@ -6,6 +6,12 @@ This R Shiny application is designed for exploring gene differential expression 
 
 -   **HanChen Wang**
 
+## App Demo
+
+Below is a quick demo of the app in action (you can also view it as a video in [Images](images/demo.mov)):
+
+![Demo GIF](./images/demo.gif)
+
 ## Features
 
 -   **File Uploads and Data Handling:**
