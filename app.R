@@ -234,8 +234,17 @@ ui <- fluidPage(
     ),
     
     tabPanel(
-      "7. Final outlook",
-      "Content"
+      "7. Download & Preview Report",
+      sidebarLayout(
+        sidebarPanel(
+          downloadButton("download_report", "Download Report (Markdown)"),
+          downloadButton("download_csv", "Download CSV (Analysis Data)")
+        ),
+        mainPanel(
+          card(full_screen = TRUE, card_header("Report Preview"),
+               uiOutput("report_preview")) # Display the report content
+        )
+      )
     ),
   )
 )
@@ -597,6 +606,71 @@ server <- function(input, output, session) {
         ggplotly(volcano_plot, tooltip = c("text"))
       })
     }
+  })
+  
+  # Tab 7. Final report outlook
+  
+  # CSV Download Handler
+  output$download_csv <- downloadHandler(
+    filename = function() {
+      paste("analysis_results_", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(de_result_table, file, row.names = FALSE)
+    }
+  )
+  
+  # Markdown Report Download Handler
+  output$download_report <- downloadHandler(
+    filename = function() {
+      paste("analysis_report_", Sys.Date(), ".md", sep = "")
+    },
+    content = function(file) {
+      # Call a helper function to create markdown content
+      writeLines(generate_report_md(), con = file)
+    }
+  )
+  
+  # Generate the markdown content
+  generate_report_md <- function() {
+    report_md <- c(
+      "# Analysis Report",
+      "",
+      "## 1. Summary",
+      "This report summarizes the gene differential expression analysis conducted on the provided dataset.",
+      "",
+      "## 2. PCA Plot",
+      "![](pca_plot.png)",
+      "",
+      "## 3. Volcano Plot",
+      "![](volcano_plot.png)",
+      "",
+      "## 4. Differential Expression Results",
+      "",
+      "The table below shows the key results of the analysis:",
+      "",
+      "```{r}",
+      "knitr::kable(de_result_table, caption = 'Differential Expression Results')",
+      "```",
+      "",
+      "## 5. Session Info",
+      "```{r}",
+      "sessionInfo()",
+      "```"
+    )
+    return(report_md)
+  }
+  
+  # Render the report as HTML in the app
+  output$report_preview <- renderUI({
+    # Generate the markdown content
+    report_md <- generate_report_md()
+    
+    # Convert markdown to HTML
+    report_html <- markdown::markdownToHTML(text = paste(report_md, collapse = "\n"), fragment.only = TRUE)
+    
+    # Render the HTML in the UI
+    HTML(report_html)
   })
   
   ## Notes: THings to consider 1) add a way to do multiple comparisons instead of just one. 2) Find a way to collect all outputs and consider what to put in tab 7.
