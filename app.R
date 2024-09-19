@@ -22,230 +22,99 @@ light_theme <- bslib::bs_theme(bootswatch = "journal")
 
 # dark_theme <- bslib::bs_theme(bootswatch = "darkly")
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
-  theme = light_theme,
-  titlePanel("Gene Differential Expression Explorer"),
-  navbarPage(
-    "Navigation",
-    
-    tabPanel(
-      "1. File uploads",
-      # Sidebar with file upload widgets
+# Define UI for application
+ui <- fluidPage(theme = light_theme, titlePanel("Gene Differential Expression Explorer"),
+  navbarPage("Navigation",
+    tabPanel("1. File uploads", 
       sidebarLayout(
         sidebarPanel(
-          # Metadata file upload
-          card(
-            card_header(class = "bg-dark", "Upload metadata.csv File (containing list of files with grouping information"),
-            card_body(
-              # Sidebar panel for file upload
-              fileInput("metadatafile", label = NULL, multiple = FALSE, accept = c(".csv",".txt")),
-              # Input: Select separator
-              radioButtons("sep", "Separator", choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = ","),
-              actionButton("upload_meta", "Upload metadata file")
-            )
-          ),
-          # FeatureCount files upload
-          card(
-            card_header(class = "bg-dark", "Upload featurecount files"),
-            card_body(
-              fileInput("featurecountfiles", label = NULL, multiple = TRUE, accept = c(".csv",".txt")),
-              actionButton("upload_featureCounts", "Upload featureCount files")
-            )
-          ),
-          # Default data upload
-          card(
-            card_header(class = "bg-dark", "Practice with demo data"),
-            card_body(
-              actionButton("demo_data", "Load demo data")
-            )
-          )
+          card(card_header(class = "bg-dark", "Upload metadata.csv File"), card_body(fileInput("metadatafile", label = NULL, accept = c(".csv", ".txt")), 
+            radioButtons("sep", "Separator", choices = c(Comma = ",", Semicolon = ";", Tab = "\t"), selected = ","), actionButton("upload_meta", "Upload metadata file"))),
+          card(card_header(class = "bg-dark", "Upload featurecount files"), card_body(fileInput("featurecountfiles", label = NULL, multiple = TRUE, accept = c(".csv", ".txt")), actionButton("upload_featureCounts", "Upload featureCount files"))),
+          card(card_header(class = "bg-dark", "Practice with demo data"), card_body(actionButton("demo_data", "Load demo data")))
         ),
-        # Main panel with data visualization
         mainPanel(
-          layout_column_wrap(
-            width = 1,
-            height = "50vh",
-            fill = TRUE,
-            heights_equal = "all",
-            # Metadata file contents
+          layout_column_wrap(width = 1, height = "50vh", fill = TRUE, heights_equal = "all",
             card(full_screen = TRUE, card_header("Metadata File"), div(tableOutput("metadata_contents"))),
-            layout_column_wrap(
-              width = 1/2,
-              height = "50vh",
-              fill = TRUE,
-              heights_equal = "all",
-              # DGE Samples table
-              card(full_screen = TRUE, card_header("DGE Samples"), div(tableOutput("dge_samples"))),
-              # DGE Counts table
-              card(full_screen = TRUE, card_header("DGE Counts"), div(DT::dataTableOutput("dge_counts")))
-            )
-          )
+            layout_column_wrap(width = 1/2, height = "50vh", fill = TRUE, heights_equal = "all", 
+              card(full_screen = TRUE, card_header("DGE Samples"), div(tableOutput("dge_samples"))), 
+              card(full_screen = TRUE, card_header("DGE Counts"), div(DT::dataTableOutput("dge_counts")))))
         )
       )
     ),
-    
-    tabPanel(
-      "2. Exploratory data analysis",
-      layout_column_wrap(
-        width = 1/2,
-        height = "50vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # Raw text output
+    tabPanel("2. Exploratory data analysis", 
+      layout_column_wrap(width = 1/2, height = "50vh", fill = TRUE, heights_equal = "all",
         card(full_screen = TRUE, card_header(textOutput("raw_text")), div(span(style = "font-size: 12px;", verbatimTextOutput("raw_summary")))),
-        # Filtered text output
         card(full_screen = TRUE, card_header(textOutput("filter_text")), div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary"))))
       ),
-      layout_column_wrap(
-        width = 1/3,
-        height = "50vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # Raw gene expression plot
+      layout_column_wrap(width = 1/3, height = "50vh", fill = TRUE, heights_equal = "all", 
         card(full_screen = TRUE, card_header("Raw gene expression"), div(plotOutput("raw_boxplot"))),
-        # Raw relative level of expression plot
         card(full_screen = TRUE, card_header("Raw relative level of expression"), div(plotOutput("raw_RLE"))),
-        # Raw PCA plot
         card(full_screen = TRUE, card_header("Raw PCA"), div(plotOutput("raw_pca")))
       )
     ),
-    
-    tabPanel(
-      "3. Quantile normalization",
-      layout_column_wrap(
-        width = 1/2,
-        height = "33vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # Summary of filtered data in step 2
+    tabPanel("3. Quantile normalization", 
+      layout_column_wrap(width = 1/2, height = "33vh", fill = TRUE, heights_equal = "all",
         card(full_screen = TRUE, card_header("Summary of filtered data in step 2"), div(span(style = "font-size: 12px;", verbatimTextOutput("filtered_summary2")))),
-        # Summary of quantile normalized data in step 3
         card(full_screen = TRUE, card_header("Summary of quantile normalized data in step 3"), div(span(style = "font-size: 12px;", verbatimTextOutput("norm_summary"))))
       ),
-      layout_column_wrap(
-        width = 1/3,
-        height = "33vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # Raw gene expression plot for step 2
+      layout_column_wrap(width = 1/3, height = "33vh", fill = TRUE, heights_equal = "all",
         card(full_screen = TRUE, card_header("Raw gene expression"), div(plotOutput("raw_boxplot2"))),
-        # Raw relative level of expression plot for step 2
         card(full_screen = TRUE, card_header("Raw relative level of expression"), div(plotOutput("raw_RLE2"))),
-        # Raw PCA plot for step 2
         card(full_screen = TRUE, card_header("Raw PCA"), div(plotOutput("raw_pca2")))
       ),
-      layout_column_wrap(
-        width = 1/3,
-        height = "33vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # Quantile normalized gene expression plot
+      layout_column_wrap(width = 1/3, height = "33vh", fill = TRUE, heights_equal = "all",
         card(full_screen = TRUE, card_header("Quantile normalized gene expression"), div(plotOutput("norm_boxplot"))),
-        # Quantile normalized relative level of expression plot
         card(full_screen = TRUE, card_header("Quantile normalized relative level of expression"), div(plotOutput("norm_RLE"))),
-        # Quantile normalized PCA plot
         card(full_screen = TRUE, card_header("Quantile normalized PCA"), div(plotOutput("norm_pca")))
       )
     ),
-    
-    tabPanel(
-      "4. TMM Normalization",
-      layout_column_wrap(
-        width = 1/2,
-        height = "50vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # Effective library size table
+    tabPanel("4. TMM Normalization", 
+      layout_column_wrap(width = 1/2, height = "50vh", fill = TRUE, heights_equal = "all",
         card(full_screen = TRUE, card_header("Effective library size"), div(span(style = "font-size: 12px;", tableOutput("eff_libsize")))),
-        # Data after tagwise disperson (dT) output
         card(full_screen = TRUE, card_header("Data after tagwise disperson (dT)"), div(span(style = "font-size: 12px;", verbatimTextOutput("dT_output"))))
       ),
-      layout_column_wrap(
-        width = 1/3,
-        height = "50vh",
-        fill = TRUE,
-        heights_equal = "all",
-        # BCV tagwise dispersion plot
+      layout_column_wrap(width = 1/3, height = "50vh", fill = TRUE, heights_equal = "all", 
         card(full_screen = TRUE, card_header("BCV tagwise dispersion"), div(plotOutput("BCV_tagwise_dispersion"))),
-        # Counts per million (cpm) table
-        card(full_screen = TRUE, card_header("Counts per million (cpm) (This table may take a while to load)"), div(DT::dataTableOutput("cpm_counts_table"))),
-        # Log2 CPM counts table
-        card(full_screen = TRUE, card_header("Log2Counts per million (log2cpm) (This table may take a while to load)"), div(DT::dataTableOutput("log2cpm_counts_table"))),
+        card(full_screen = TRUE, card_header("Counts per million (cpm)"), div(DT::dataTableOutput("cpm_counts_table"))),
+        card(full_screen = TRUE, card_header("Log2Counts per million (log2cpm)"), div(DT::dataTableOutput("log2cpm_counts_table")))
       )
     ),
-    
-    
-    tabPanel(
-      "5. Data visualization",
-      layout_column_wrap(
-        fill = TRUE,
-        heights_equal = "all",
-        card(full_screen = TRUE,
-          card_header("% total variance covered by each PC"),
-          div(plotOutput("percentVar_perPC"))
-        ),
-        # PCA graph
-        card(
-          full_screen = TRUE,
-          card_header("Principal Component Analysis"),
-          div(
-            selectInput("pc_number1", "Select the first PC:", choices = NULL),
-            selectInput("pc_number2", "Select the second PC:", choices = NULL),
-            plotOutput("pca_plot")
-          )
-        ),
+    tabPanel("5. Data visualization", 
+      layout_column_wrap(fill = TRUE, heights_equal = "all",
+        card(full_screen = TRUE, card_header("% total variance covered by each PC"), div(plotOutput("percentVar_perPC"))),
+        card(full_screen = TRUE, card_header("Principal Component Analysis"), 
+          div(selectInput("pc_number1", "Select the first PC:", choices = NULL), selectInput("pc_number2", "Select the second PC:", choices = NULL), plotOutput("pca_plot")))
       )
     ),
-    
-    tabPanel(
-      "6. EdgeR Pairwise Analysis",
+    tabPanel("6. EdgeR Pairwise Analysis", 
       sidebarLayout(
         sidebarPanel(
-          # Treatment group selection
-          selectInput("treatedfactor", "Select treated factor group (single choice only. For example, KO in KO vs WT group. If needed, update the group names in the input metadata.csv)", choices = NULL, multiple = FALSE),
-          textInput("treatedfactor_name", "Name for the treated group", value = "Treatment"),
-          # Baseline group selection
-          selectInput("basefactor", "Select base factor group  (single choice only. For example, WT in KO vs WT group)", choices = NULL, multiple = FALSE),
-          textInput("basefactor_name", "Name for the baseline group (for example, WT in KO vs WT group)", value = "Baseline"),
-          # Start comparison
+          selectInput("treatedfactor", "Select treated factor group", choices = NULL),
+          textInput("treatedfactor_name", "Name for treated group", value = "Treatment"),
+          selectInput("basefactor", "Select base factor group", choices = NULL),
+          textInput("basefactor_name", "Name for the baseline group", value = "Baseline"),
           actionButton("compare", "Compare"),
-          # Metadata overview aiding users to select the groups
-          card(full_screen = TRUE, card_header("Metadata Overview"), div(span(style = "font-size: 12px;", verbatimTextOutput("sample_overview")))),
+          card(full_screen = TRUE, card_header("Metadata Overview"), div(span(style = "font-size: 12px;", verbatimTextOutput("sample_overview"))))
         ),
         mainPanel(
-          # Display the comparison text
-          tags$style(HTML("#comparison_text {font-size: 20pt;}")),
           textOutput("comparison_text"),
-          # Comparison results table
           card(full_screen = TRUE, card_header("Comparison table"), div(DT::dataTableOutput("results"))),
-          # Volcano plot
-          card(
-            full_screen = TRUE, 
-            card_header("Volcano plot (default significance FC>=+/-1.5 FDR<=0.01)"), 
-            div(
-              numericInput("fc_cutoff", "Fold Change Cutoff", value = 1.5),
-              numericInput("fdr_cutoff", "FDR Cutoff", value = 0.01),
-              plotlyOutput("volcanoPlot")
-            )
-          )
+          card(full_screen = TRUE, card_header("Volcano plot"), div(numericInput("fc_cutoff", "Fold Change Cutoff", value = 1.5), numericInput("fdr_cutoff", "FDR Cutoff", value = 0.01), plotlyOutput("volcanoPlot")))
         )
       )
     ),
-    
-    tabPanel(
-      "7. Download & Preview Report",
+    tabPanel("7. Download & Preview Report", 
       sidebarLayout(
         sidebarPanel(
           downloadButton("download_report", "Download Report (Markdown)"),
-          downloadButton("download_csv", "Download CSV (Analysis Data)")
+          downloadButton("download_csv", "Download CSV (Analysis Data)"),
+          sliderInput("slider", "Slider", 1, 100, 50),
+          downloadButton("report", "Generate report"),
         ),
-        mainPanel(
-          card(full_screen = TRUE, card_header("Report Preview"),
-               uiOutput("report_preview")) # Display the report content
-        )
+        mainPanel(card(full_screen = TRUE, card_header("Report Preview"), uiOutput("report_preview")))
       )
-    ),
+    )
   )
 )
 
@@ -673,6 +542,34 @@ server <- function(input, output, session) {
     HTML(report_html)
   })
   
+  output$report <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Ensure the plot object is accessible by triggering the reactive plot
+      volcano_plot_obj <- output$volcanoPlot()$x
+      
+      params <- list(
+        volcanoPlot = volcano_plot_obj  # Pass the interactive plot object
+      )
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
+}
+  
   ## Notes: THings to consider 1) add a way to do multiple comparisons instead of just one. 2) Find a way to collect all outputs and consider what to put in tab 7.
 
   # Tab 6: EdgeR Pairwise Analysis
@@ -912,7 +809,7 @@ server <- function(input, output, session) {
   # 
   
   # Tab 7: Final outlook
-}
+
 
 # Run the application
 shinyApp(ui = ui, server = server)

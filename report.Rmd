@@ -1,0 +1,15 @@
+---
+title: "Gene Expression Analysis Report"
+output: html_document
+params:
+  volcanoPlot: NA
+---
+
+## Volcano Plot
+
+Below is the interactive volcano plot showing gene differential expression:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Render the interactive plot passed as a parameter
+params$volcanoPlot
+```
